@@ -131,6 +131,17 @@ function ParagraphBlock( {
 		style: { direction },
 	} );
 	const blockEditingMode = useBlockEditingMode();
+	const { 'aria-label': injectedAriaLabel, ...restBlockProps } = blockProps;
+	const defaultParagraphLabel = __( 'Block: Paragraph' );
+
+	let ariaLabel = defaultParagraphLabel;
+	if ( injectedAriaLabel !== defaultParagraphLabel ) {
+		ariaLabel = injectedAriaLabel;
+	} else if ( RichText.isEmpty( content ) ) {
+		ariaLabel = __(
+			'Empty block; start writing or type forward slash to choose a block'
+		);
+	}
 
 	return (
 		<>
@@ -155,7 +166,7 @@ function ParagraphBlock( {
 			<RichText
 				identifier="content"
 				tagName="p"
-				{ ...blockProps }
+				{ ...restBlockProps }
 				value={ content }
 				onChange={ ( newContent ) =>
 					setAttributes( { content: newContent } )
@@ -163,13 +174,7 @@ function ParagraphBlock( {
 				onMerge={ mergeBlocks }
 				onReplace={ onReplace }
 				onRemove={ onRemove }
-				aria-label={
-					RichText.isEmpty( content )
-						? __(
-								'Empty block; start writing or type forward slash to choose a block'
-						  )
-						: __( 'Block: Paragraph' )
-				}
+				aria-label={ ariaLabel }
 				data-empty={ RichText.isEmpty( content ) }
 				placeholder={ placeholder || __( 'Type / to choose a block' ) }
 				data-custom-placeholder={ placeholder ? true : undefined }

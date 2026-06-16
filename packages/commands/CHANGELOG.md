@@ -5,6 +5,7 @@
 ### Internal
 
 -   Update `exports` to use subpath patterns instead of deprecated trailing `/` folder mappings ([#80270](https://github.com/WordPress/gutenberg/pull/80270)).
+-   Replace the `cmdk` dependency with the `Autocomplete` primitive from `@wordpress/ui` to resolve accessibility issues ([#TODO](https://github.com/WordPress/gutenberg/pull/TODO)).
 
 ## 1.51.0 (2026-07-14)
 

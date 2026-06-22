@@ -96,6 +96,8 @@ export interface CropperProps {
 	maxZoom?: number;
 	/** Fixed aspect ratio (width / height) in pixel space for the crop area. */
 	aspectRatio?: number;
+	/** Visual crop shape for overlays and shape-specific constraints. */
+	stencilShape?: 'rectangle' | 'circle';
 	/**
 	 * Enable freeform crop mode with resizable handles.
 	 * When false (default), the crop area is fixed and centered.
@@ -146,6 +148,7 @@ export interface CropperProps {
  * @param root0.minZoom           Minimum zoom level override.
  * @param root0.maxZoom           Maximum zoom level.
  * @param root0.aspectRatio       Fixed aspect ratio (width/height).
+ * @param root0.stencilShape      Visual crop shape.
  * @param root0.freeformCrop      Enable resize handles.
  * @param root0.focusOnMount      Focus the crop area on mount.
  * @param root0.onImageLoaded     Image load callback.
@@ -167,6 +170,7 @@ function CropperInner(
 		minZoom,
 		maxZoom,
 		aspectRatio,
+		stencilShape = 'rectangle',
 		freeformCrop = false,
 		focusOnMount = false,
 		onImageLoaded,
@@ -190,6 +194,7 @@ function CropperInner(
 		setViewportPan,
 		resetViewport,
 	} = useViewport();
+	const effectiveAspectRatio = stencilShape === 'circle' ? 1 : aspectRatio;
 	// Canvas measurement via ResizeObserver. The canvas is the inner
 	// positioning context for image/stencil/handles — inset from the root
 	// by the handle gutter, so crop math operates on the reduced box.
@@ -313,12 +318,12 @@ function CropperInner(
 			freeformCrop ||
 			visualSize.width === 0 ||
 			visualSize.height === 0 ||
-			! aspectRatio ||
-			aspectRatio <= 0
+			! effectiveAspectRatio ||
+			effectiveAspectRatio <= 0
 		) {
 			return;
 		}
-		const rect = computeInscribedRect( aspectRatio, visualSize );
+		const rect = computeInscribedRect( effectiveAspectRatio, visualSize );
 		const current = state.cropRect;
 		if (
 			Math.abs( current.x - rect.x ) < CROP_RECT_EPSILON &&
@@ -331,7 +336,7 @@ function CropperInner(
 		adjustCropRectForViewport( rect );
 	}, [
 		freeformCrop,
-		aspectRatio,
+		effectiveAspectRatio,
 		visualSize,
 		adjustCropRectForViewport,
 		state.cropRect,
@@ -342,23 +347,23 @@ function CropperInner(
 	// cropRect already matches the inscribed rect — composite stores
 	// reshape atomically inside the reducer, so this effect is a
 	// no-op there.
-	const prevAspectRatioRef = useRef( aspectRatio );
+	const prevAspectRatioRef = useRef( effectiveAspectRatio );
 	useEffect( () => {
-		if ( prevAspectRatioRef.current === aspectRatio ) {
+		if ( prevAspectRatioRef.current === effectiveAspectRatio ) {
 			return;
 		}
-		prevAspectRatioRef.current = aspectRatio;
+		prevAspectRatioRef.current = effectiveAspectRatio;
 
 		if (
 			! freeformCrop ||
 			visualSize.width === 0 ||
 			visualSize.height === 0 ||
-			! aspectRatio ||
-			aspectRatio <= 0
+			! effectiveAspectRatio ||
+			effectiveAspectRatio <= 0
 		) {
 			return;
 		}
-		const rect = computeInscribedRect( aspectRatio, visualSize );
+		const rect = computeInscribedRect( effectiveAspectRatio, visualSize );
 		const current = state.cropRect;
 		if (
 			Math.abs( current.x - rect.x ) < CROP_RECT_EPSILON &&
@@ -370,7 +375,7 @@ function CropperInner(
 		}
 		adjustCropRectForViewport( rect );
 	}, [
-		aspectRatio,
+		effectiveAspectRatio,
 		freeformCrop,
 		visualSize,
 		adjustCropRectForViewport,
@@ -450,7 +455,7 @@ function CropperInner(
 	const keyboardResizeStep = useMemo( () => {
 		if (
 			displayScale < PIXEL_SNAP_DISPLAY_SCALE ||
-			( aspectRatio && aspectRatio > 0 ) ||
+			( effectiveAspectRatio && effectiveAspectRatio > 0 ) ||
 			naturalWidth <= 0 ||
 			naturalHeight <= 0
 		) {
@@ -482,7 +487,7 @@ function CropperInner(
 		};
 	}, [
 		displayScale,
-		aspectRatio,
+		effectiveAspectRatio,
 		naturalWidth,
 		naturalHeight,
 		state.rotation,
@@ -544,7 +549,7 @@ function CropperInner(
 	useEffect( () => {
 		const isPixelSnapEnabled =
 			freeformCrop &&
-			( ! aspectRatio || aspectRatio <= 0 ) &&
+			( ! effectiveAspectRatio || effectiveAspectRatio <= 0 ) &&
 			displayScale >= PIXEL_SNAP_DISPLAY_SCALE &&
 			naturalWidth > 0 &&
 			naturalHeight > 0;
@@ -576,7 +581,7 @@ function CropperInner(
 
 		setCropRect( snappedCropRect );
 	}, [
-		aspectRatio,
+		effectiveAspectRatio,
 		displayScale,
 		freeformCrop,
 		naturalWidth,
@@ -983,6 +988,8 @@ function CropperInner(
 			className={ clsx(
 				'wp-media-editor-image-editor',
 				isDragging && 'wp-media-editor-image-editor--dragging',
+				stencilShape === 'circle' &&
+					'wp-media-editor-image-editor--circle-stencil',
 				className
 			) }
 		>
@@ -1077,7 +1084,7 @@ function CropperInner(
 						onResizeStart={ handleResizeStart }
 						onResizeEnd={ handleResizeEnd }
 						onEscape={ handleEscape }
-						aspectRatio={ aspectRatio }
+						aspectRatio={ effectiveAspectRatio }
 						freeformCrop={ freeformCrop }
 						isResizeDisabled={ isTouchPinching }
 						stencilTransition={ settleStencilTransition }

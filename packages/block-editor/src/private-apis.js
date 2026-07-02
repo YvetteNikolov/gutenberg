@@ -77,7 +77,6 @@ import {
 import { LinkPicker } from './components/link-picker';
 import useRemoteUrlData from './components/link-control/use-rich-url-data';
 import { PrivateBlockContext } from './components/block-list/private-block-context';
-import { BlockAriaLabelOverrideContext } from './components/block-list/block-aria-label-context';
 import useListViewPanelState from './components/use-list-view-panel-state';
 import InnerContent from './components/inner-content';
 import {
@@ -154,7 +153,6 @@ lock( privateApis, {
 	LinkPicker,
 	useRemoteUrlData,
 	PrivateBlockContext,
-	BlockAriaLabelOverrideContext,
 	useListViewPanelState,
 	isHashLink,
 	isRelativePath,

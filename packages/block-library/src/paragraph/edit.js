@@ -34,7 +34,7 @@ import { useOnEnter } from './use-enter';
 import useDeprecatedAlign from './deprecated-attributes';
 import { unlock } from '../lock-unlock';
 
-const { BlockAriaLabelOverrideContext } = unlock( blockEditorPrivateApis );
+const { PrivateBlockContext } = unlock( blockEditorPrivateApis );
 
 function ParagraphRTLControl( { direction, setDirection } ) {
 	return (
@@ -136,7 +136,7 @@ function ParagraphBlock( {
 		style: { direction },
 	} );
 	const blockEditingMode = useBlockEditingMode();
-	const ariaLabelOverride = useContext( BlockAriaLabelOverrideContext );
+	const { ariaLabel } = useContext( PrivateBlockContext );
 
 	return (
 		<>
@@ -170,7 +170,7 @@ function ParagraphBlock( {
 				onReplace={ onReplace }
 				onRemove={ onRemove }
 				aria-label={
-					ariaLabelOverride ??
+					ariaLabel ??
 					( RichText.isEmpty( content )
 						? __(
 								'Empty block; start writing or type forward slash to choose a block'

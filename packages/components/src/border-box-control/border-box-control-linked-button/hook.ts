@@ -1,15 +1,14 @@
 /**
- * WordPress dependencies
+ * External dependencies
  */
-import { useMemo } from '@wordpress/element';
+import clsx from 'clsx';
 
 /**
  * Internal dependencies
  */
-import * as styles from '../styles';
+import styles from '../style.module.scss';
 import type { WordPressComponentProps } from '../../context';
 import { useContextSystem } from '../../context';
-import { useCx } from '../../utils/hooks/use-cx';
 
 import type { LinkedButtonProps } from '../types';
 
@@ -21,11 +20,8 @@ export function useBorderBoxControlLinkedButton(
 		'BorderBoxControlLinkedButton'
 	);
 
-	// Generate class names.
-	const cx = useCx();
-	const classes = useMemo( () => {
-		return cx( styles.borderBoxControlLinkedButton, className );
-	}, [ className, cx ] );
-
-	return { ...otherProps, className: classes };
+	return {
+		...otherProps,
+		className: clsx( styles[ 'linked-button' ], className ),
+	};
 }

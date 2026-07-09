@@ -1,12 +1,12 @@
 /**
  * WordPress dependencies
  */
-import { useMemo, useState } from '@wordpress/element';
+import { useState } from '@wordpress/element';
 
 /**
  * Internal dependencies
  */
-import * as styles from '../styles';
+import styles from '../style.module.scss';
 import {
 	getBorderDiff,
 	getCommonBorder,
@@ -18,7 +18,6 @@ import {
 } from '../utils';
 import type { WordPressComponentProps } from '../../context';
 import { useContextSystem } from '../../context';
-import { useCx } from '../../utils/hooks/use-cx';
 
 import type { Border } from '../../border-control/types';
 import type { Borders, BorderSide, BorderBoxControlProps } from '../types';
@@ -108,22 +107,12 @@ export function useBorderBoxControl(
 		}
 	};
 
-	const cx = useCx();
-	const classes = useMemo( () => {
-		return cx( styles.borderBoxControl, className );
-	}, [ cx, className ] );
-
-	const linkedControlClassName = useMemo( () => {
-		return cx( styles.linkedBorderControl() );
-	}, [ cx ] );
-
-	const wrapperClassName = useMemo( () => {
-		return cx( styles.wrapper );
-	}, [ cx ] );
+	const linkedControlClassName = styles[ 'linked-border-control' ];
+	const wrapperClassName = styles.wrapper;
 
 	return {
 		...otherProps,
-		className: classes,
+		className,
 		colors,
 		disableUnits: mixedBorders && ! hasWidthValue,
 		enableAlpha,

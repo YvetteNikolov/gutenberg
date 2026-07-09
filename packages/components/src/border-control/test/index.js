@@ -14,8 +14,6 @@ import userEvent from '@testing-library/user-event';
  * Internal dependencies
  */
 import { BorderControl } from '../';
-import * as styles from '../styles';
-import { useCx } from '../../utils/hooks/use-cx';
 
 const colors = [
 	{ name: 'Gray', color: '#f6f7f7' },
@@ -82,19 +80,6 @@ function TestBorderControl( restProps ) {
 	return <BorderControl { ...restProps } />;
 }
 
-const getGeneratedEmotionClassNames = ( element ) =>
-	Array.from( element.classList ).filter( ( className ) =>
-		/^(css|emotion)-/.test( className )
-	);
-
-function EmotionStyleTest( { styleFragment } ) {
-	const cx = useCx();
-
-	return (
-		<div data-testid="emotion-style" className={ cx( styleFragment ) } />
-	);
-}
-
 describe( 'BorderControl', () => {
 	describe( 'basic rendering', () => {
 		it( 'should render standard border control', () => {
@@ -138,22 +123,6 @@ describe( 'BorderControl', () => {
 
 			const slider = getSliderInput();
 			expect( slider ).toBeInTheDocument();
-		} );
-
-		it( 'should compose inner wrapper width and height styles in a single generated class', () => {
-			render(
-				<EmotionStyleTest
-					styleFragment={ styles.getInnerWrapperStyles( {
-						hasWidth: true,
-					} ) }
-				/>
-			);
-
-			expect(
-				getGeneratedEmotionClassNames(
-					screen.getByTestId( 'emotion-style' )
-				)
-			).toHaveLength( 1 );
 		} );
 
 		it( 'should render placeholder in UnitControl', () => {

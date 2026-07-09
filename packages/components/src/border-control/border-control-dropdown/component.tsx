@@ -149,13 +149,12 @@ const BorderControlDropdown = (
 		disableCustomColors,
 		enableAlpha,
 		enableStyle,
-		indicatorClassName,
 		indicatorWrapperClassName,
+		indicatorWrapperStyle,
 		isStyleSettable,
 		onReset,
 		onColorChange,
 		onStyleChange,
-		popoverContentClassName,
 		popoverControlsClassName,
 		resetButtonWrapperClassName,
 		__unstablePopoverProps,
@@ -189,11 +188,11 @@ const BorderControlDropdown = (
 			showTooltip
 			__next40pxDefaultSize
 		>
-			<span className={ indicatorWrapperClassName }>
-				<ColorIndicator
-					className={ indicatorClassName }
-					colorValue={ color }
-				/>
+			<span
+				className={ indicatorWrapperClassName }
+				style={ indicatorWrapperStyle }
+			>
+				<ColorIndicator colorValue={ color } />
 			</span>
 		</Button>
 	);
@@ -203,7 +202,6 @@ const BorderControlDropdown = (
 			<DropdownContentWrapper paddingSize="medium">
 				<VStack className={ popoverControlsClassName } spacing={ 6 }>
 					<ColorPalette
-						className={ popoverContentClassName }
 						value={ color }
 						onChange={ onColorChange }
 						{ ...{ colors, disableCustomColors } }

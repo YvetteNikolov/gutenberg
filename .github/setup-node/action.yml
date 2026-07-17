@@ -22,7 +22,7 @@ runs:
 
         - name: Pin npm version for consistency
           run: |
-              npm install --global npm@10
+              npm install --global npm@11
               npm --version
           shell: bash
 

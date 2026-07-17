@@ -94,7 +94,7 @@ jobs:
 
             - name: Pin npm version for consistency
               run: |
-                  npm install --global npm@10
+                  npm install --global npm@11
                   npm --version
 
             - name: Publish development packages to npm ("next" dist-tag)

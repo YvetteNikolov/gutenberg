@@ -283,8 +283,8 @@ test.describe( 'Copy/cut/paste', () => {
 			.click();
 		await page.keyboard.type( 'A block' );
 		await editor.insertBlock( {
-			name: 'core/verse',
-			attributes: { content: 'verse' },
+			name: 'core/paragraph',
+			attributes: { content: 'middle' },
 		} );
 		await editor.insertBlock( { name: 'core/paragraph' } );
 		await page.keyboard.type( 'B block' );
@@ -374,8 +374,8 @@ test.describe( 'Copy/cut/paste', () => {
 			.click();
 		await page.keyboard.type( 'A block' );
 		await editor.insertBlock( {
-			name: 'core/verse',
-			attributes: { content: 'verse' },
+			name: 'core/paragraph',
+			attributes: { content: 'middle' },
 		} );
 		await editor.insertBlock( { name: 'core/paragraph' } );
 		await page.keyboard.type( 'B block' );

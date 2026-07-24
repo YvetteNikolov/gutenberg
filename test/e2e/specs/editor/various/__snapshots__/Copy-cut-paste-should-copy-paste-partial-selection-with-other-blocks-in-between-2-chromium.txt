@@ -2,9 +2,9 @@
 <p>block</p>
 <!-- /wp:paragraph -->
 
-<!-- wp:verse -->
-<pre class="wp-block-verse">verse</pre>
-<!-- /wp:verse -->
+<!-- wp:paragraph -->
+<p>middle</p>
+<!-- /wp:paragraph -->
 
 <!-- wp:paragraph -->
 <p>B </p>
@@ -14,9 +14,9 @@
 <p>A block</p>
 <!-- /wp:paragraph -->
 
-<!-- wp:verse -->
-<pre class="wp-block-verse">verse</pre>
-<!-- /wp:verse -->
+<!-- wp:paragraph -->
+<p>middle</p>
+<!-- /wp:paragraph -->
 
 <!-- wp:paragraph -->
 <p>B block</p>

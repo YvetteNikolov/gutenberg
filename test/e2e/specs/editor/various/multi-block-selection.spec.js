@@ -1789,6 +1789,48 @@ test.describe( 'Multi-block selection (@firefox, @webkit)', () => {
 				] );
 		} );
 
+		test( 'should select a block without splitting support as a block when extending into it', async ( {
+			page,
+			editor,
+			multiBlockSelectionUtils,
+		} ) => {
+			await editor.insertBlock( {
+				name: 'core/paragraph',
+				attributes: { content: 'a paragraph' },
+			} );
+			await editor.insertBlock( {
+				name: 'core/verse',
+				attributes: { content: 'a verse' },
+			} );
+			// Deselect so the verse's block toolbar does not cover the
+			// paragraph.
+			await page.evaluate( () =>
+				window.wp.data
+					.dispatch( 'core/block-editor' )
+					.clearSelectedBlock()
+			);
+
+			await editor.canvas
+				.getByText( 'a paragraph', { exact: true } )
+				.click( { position: { x: 40, y: 8 } } );
+
+			// The verse has text, but no value for a partial selection: it
+			// cannot split or merge, so it is selected as a block.
+			await page.keyboard.press( 'Shift+ArrowDown' );
+			await expect
+				.poll( multiBlockSelectionUtils.getSelectedBlocks )
+				.toMatchObject( [
+					{
+						name: 'core/paragraph',
+						attributes: { content: 'a paragraph' },
+					},
+					{
+						name: 'core/verse',
+						attributes: { content: 'a verse' },
+					},
+				] );
+		} );
+
 		test( 'should extend the selection from a block without a text selection', async ( {
 			page,
 			editor,

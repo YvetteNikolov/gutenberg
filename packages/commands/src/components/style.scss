@@ -97,20 +97,6 @@ $palette-header-height: 48px;
 		&:has(.commands-command-menu__empty) {
 			border-top: $border-width solid $gray-300;
 		}
-
-		& [cmdk-list-sizer] > [cmdk-group] > [cmdk-group-items]:not(:empty) {
-			padding: 0 $grid-unit-10 $grid-unit-05;
-		}
-
-		[cmdk-group-heading] {
-			margin-top: $grid-unit-10;
-			padding: $grid-unit-10 $grid-unit-20;
-			line-height: $grid-unit-20;
-			font-size: $font-size-x-small;
-			font-weight: var(--wpds-typography-font-weight-emphasis);
-			text-transform: uppercase;
-			color: $gray-900;
-		}
 	}
 
 	.commands-command-menu__list-scrollable-container {

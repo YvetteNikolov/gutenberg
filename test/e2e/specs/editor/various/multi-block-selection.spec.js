@@ -1727,6 +1727,68 @@ test.describe( 'Multi-block selection (@firefox, @webkit)', () => {
 				] );
 		} );
 
+		test( 'should extend the selection block by block over a block without text', async ( {
+			page,
+			editor,
+			multiBlockSelectionUtils,
+		} ) => {
+			await editor.insertBlock( {
+				name: 'core/paragraph',
+				attributes: { content: 'first paragraph' },
+			} );
+			await editor.insertBlock( { name: 'core/spacer' } );
+			await editor.insertBlock( {
+				name: 'core/paragraph',
+				attributes: { content: 'second paragraph' },
+			} );
+
+			// Click within the text, not the (full row width) center.
+			await editor.canvas
+				.getByText( 'first paragraph', { exact: true } )
+				.click( { position: { x: 40, y: 8 } } );
+
+			// The nearest text position is in the second paragraph, but
+			// the selection must not reach past the spacer: it becomes a
+			// block selection up to the spacer.
+			await page.keyboard.press( 'Shift+ArrowDown' );
+			await expect
+				.poll( multiBlockSelectionUtils.getSelectedBlocks )
+				.toMatchObject( [
+					{
+						name: 'core/paragraph',
+						attributes: { content: 'first paragraph' },
+					},
+					{ name: 'core/spacer' },
+				] );
+
+			await page.keyboard.press( 'Shift+ArrowDown' );
+			await expect
+				.poll( multiBlockSelectionUtils.getSelectedBlocks )
+				.toMatchObject( [
+					{
+						name: 'core/paragraph',
+						attributes: { content: 'first paragraph' },
+					},
+					{ name: 'core/spacer' },
+					{
+						name: 'core/paragraph',
+						attributes: { content: 'second paragraph' },
+					},
+				] );
+
+			// The selection also shrinks block by block.
+			await page.keyboard.press( 'Shift+ArrowUp' );
+			await expect
+				.poll( multiBlockSelectionUtils.getSelectedBlocks )
+				.toMatchObject( [
+					{
+						name: 'core/paragraph',
+						attributes: { content: 'first paragraph' },
+					},
+					{ name: 'core/spacer' },
+				] );
+		} );
+
 		test( 'should extend the selection from a block without a text selection', async ( {
 			page,
 			editor,

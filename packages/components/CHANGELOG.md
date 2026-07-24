@@ -41,6 +41,7 @@
 
 ### Internal
 
+-   Upgrade Storybook to 10.5.3 and remove temporary `render` workarounds from `ColorPicker`, `Composite`, `Dropdown`, and `Navigator` stories that are no longer needed ([#80692](https://github.com/WordPress/gutenberg/pull/80692)).
 -   `Button`: Expand the Storybook e2e `VariantStates` matrix with compact, small, and with-icon rows ([#80793](https://github.com/WordPress/gutenberg/pull/80793)).
 -   Update `react-day-picker` to 9.14.0 ([#80792](https://github.com/WordPress/gutenberg/pull/80792)).
 -   Update `date-fns` to 4.4.0 ([#80763](https://github.com/WordPress/gutenberg/pull/80763)).

@@ -18,6 +18,7 @@
 
 ### Internal
 
+-   Upgrade Storybook to 10.5.3 and remove a temporary `render` workaround from the DataViews story that is no longer needed ([#80692](https://github.com/WordPress/gutenberg/pull/80692)).
 -   Update `date-fns` to 4.4.0 ([#80763](https://github.com/WordPress/gutenberg/pull/80763)).
 -   Update Jest type definitions to v30 ([#80767](https://github.com/WordPress/gutenberg/pull/80767)).
 -   Update `@ariakit/react` to 0.4.35 ([#80765](https://github.com/WordPress/gutenberg/pull/80765)).

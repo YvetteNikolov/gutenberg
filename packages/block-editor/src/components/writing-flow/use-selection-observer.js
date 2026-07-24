@@ -124,12 +124,9 @@ export default function useSelectionObserver() {
 			const { defaultView } = ownerDocument;
 
 			let isTripleClick = false;
-			let isKeyboardExtension = false;
-			let keyboardFocusClientId = null;
 
 			function onMouseDown( event ) {
 				isTripleClick = event.detail === 3;
-				isKeyboardExtension = false;
 				// A shift+click makes a multi-selection: mark the gesture as
 				// in progress so the clicked block's focus handler does not
 				// select it (collapsing the native range being made), and so
@@ -140,23 +137,8 @@ export default function useSelectionObserver() {
 				}
 			}
 
-			function onKeyDown( event ) {
+			function onKeyDown() {
 				isTripleClick = false;
-				isKeyboardExtension =
-					event.shiftKey &&
-					[
-						'ArrowDown',
-						'ArrowUp',
-						'ArrowLeft',
-						'ArrowRight',
-					].includes( event.key );
-				// Where the native selection focus is as the key goes down.
-				// The store cannot serve as the reference: its update is
-				// asynchronous, and the next press may arrive first. The
-				// native selection is always current.
-				keyboardFocusClientId = isKeyboardExtension
-					? getBlockClientId( defaultView.getSelection().focusNode )
-					: null;
 			}
 
 			function onSelectionChange( event ) {
@@ -247,66 +229,6 @@ export default function useSelectionObserver() {
 
 				let startClientId = getBlockClientId( startNode );
 				let endClientId = getBlockClientId( endNode );
-
-				// A keyboard extension moves the native focus to the nearest
-				// text position. A block without one (e.g. a spacer) is
-				// skipped: the native selection reaches into the block
-				// beyond it. The selection must grow block by block instead,
-				// so record a block selection up to the first skipped block.
-				// A block that could hold a partial text selection is never
-				// skipped (it has a text position to land in), so the
-				// skipped block is always fully covered. The overshot native
-				// selection is left alone here; use-multi-selection clears
-				// it while presenting the block selection, and further
-				// presses extend the block selection (use-arrow-nav).
-				if (
-					isKeyboardExtension &&
-					! selection.isCollapsed &&
-					startClientId &&
-					endClientId &&
-					keyboardFocusClientId &&
-					keyboardFocusClientId !== endClientId &&
-					startClientId !== endClientId
-				) {
-					const previousElement = ownerDocument.getElementById(
-						`block-${ keyboardFocusClientId }`
-					);
-					const endElement = ownerDocument.getElementById(
-						`block-${ endClientId }`
-					);
-
-					if (
-						previousElement &&
-						endElement &&
-						// Only among siblings: an extension across a nesting
-						// boundary is promoted to the common level instead
-						// (below).
-						previousElement.parentElement ===
-							endElement.parentElement
-					) {
-						const position =
-							previousElement.compareDocumentPosition(
-								endElement
-							);
-						const isForward = !! (
-							// eslint-disable-next-line no-bitwise
-							( position & node.DOCUMENT_POSITION_FOLLOWING )
-						);
-						const sibling = isForward
-							? previousElement.nextElementSibling
-							: previousElement.previousElementSibling;
-						const siblingClientId =
-							sibling && getBlockClientId( sibling );
-
-						if (
-							siblingClientId &&
-							siblingClientId !== endClientId
-						) {
-							multiSelect( startClientId, siblingClientId );
-							return;
-						}
-					}
-				}
 
 				// If the selection has changed and we had pressed `shift+click`,
 				// we need to check if in an element that doesn't support

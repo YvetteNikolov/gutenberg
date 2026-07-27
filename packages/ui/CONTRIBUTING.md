@@ -3,7 +3,7 @@
 The following guidance builds upon the existing [contribution guidelines for `@wordpress/components`](https://github.com/WordPress/gutenberg/blob/trunk/packages/components/CONTRIBUTING.md), which should serve as a starting point for contribution. The documentation included here encodes decisions and technical approaches which are unique to this package.
 
 For public-package boundaries and guidance that applies across the WordPress
-Design System packages, see [Working with WordPress Design System packages](https://github.com/WordPress/gutenberg/blob/HEAD/docs/contributors/design/design-system-packages.md).
+Design System packages, see [Working with WordPress Design System packages](https://github.com/WordPress/gutenberg/blob/trunk/docs/contributors/design/design-system-packages.md).
 
 ## Folder Structure
 

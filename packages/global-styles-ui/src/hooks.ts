@@ -34,10 +34,10 @@ extend( [ a11yPlugin ] );
  *
  * @param path               The path to the style value.
  * @param blockName          The name of the block, if applicable.
- * @param readFrom           Which source to read from: "base" (theme), "user" (customizations), or "merged" (final result).
+ * @param readFrom           Which source to read from: "base" (theme), "user" (customizations), or "merged" (final result). Defaults to "merged".
  * @param shouldDecodeEncode Whether to decode and encode the style value.
- * @param state              Optional style state path. Supports viewport states (e.g. `mobile`),
- *                           pseudo-selector states (e.g. `:hover`) or both (e.g. `mobile.:hover`).
+ * @param state              Optional style state path. Supports viewport states (e.g. `@mobile`),
+ *                           pseudo-selector states (e.g. `:hover`) or both (e.g. `@mobile.:hover`).
  *                           Pseudo selectors are always read/written as nested keys.
  * @return An array containing the style value and a function to set the style
  * value.
@@ -129,7 +129,7 @@ export function useStyle< T = any >(
  *
  * @param path      The path to the setting value.
  * @param blockName The name of the block, if applicable.
- * @param readFrom  Which source to read from: "base" (theme), "user" (customizations), or "merged" (final result).
+ * @param readFrom  Which source to read from: "base" (theme), "user" (customizations), or "merged" (final result). Defaults to "merged".
  * @return An array containing the setting value and a function to set the
  * setting value.
  *

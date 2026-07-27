@@ -15,7 +15,7 @@
 ### Bug Fixes
 
 -   Gate the HEIC canvas conversion fallback on `window.__clientSideMediaProcessing` instead of the redundant `window.__heicUploadSupport` flag, fixing client-side HEIC conversion in Safari on core WordPress installs ([#80452](https://github.com/WordPress/gutenberg/pull/80452)).
--   `getSelectedBlockCount` now includes the blocks nested inside a multi-selection, so the selected block count shown in the UI and announced to screen readers reflects the full content of the selection ([#80745](https://github.com/WordPress/gutenberg/pull/80745)).
+-   The multi-selection inspector card and the spoken selection announcement now disclose the total number of blocks a selection contains when the selected blocks have nested content, e.g. "2 blocks selected, 4 including nested blocks." ([#80745](https://github.com/WordPress/gutenberg/pull/80745)).
 
 ## 16.0.0 (2026-07-14)
 

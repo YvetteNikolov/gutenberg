@@ -1,0 +1,65 @@
+# Codex variant of the pull-requests skill eval. Codex reads AGENTS.md natively,
+# so there is no meaningful "no guidance" baseline provider here — use the Claude
+# config for the discrimination comparison.
+description: Verify the pull-requests skill is discovered, followed, and produces a review-ready PR description (Codex)
+
+prompts:
+    - label: Author a PR description
+      raw: |
+          You are preparing the pull request for work that is already committed in this
+          repository. The pull request contains exactly one commit:
+
+              1f27df2962c8f459582eeb41435251713f30c810
+
+          Author the pull request description. Your final answer must be only the PR
+          description markdown, with no preamble or commentary. Do not modify any files.
+
+providers:
+    - id: file://providers/agent-provider.mjs
+      label: Codex with repo guidance
+      config:
+          agent: codex
+          working_dir: ../../..
+
+defaultTest:
+    options:
+        bustCache: true
+    assert:
+        - type: javascript
+          value: file://assertions/grade-pr-description.cjs
+          threshold: 1
+          metric: Skill compliance checks
+        - type: llm-rubric
+          value: |
+              Judge whether this PR description would let a Gutenberg reviewer quickly
+              understand and test the change.
+
+              Context: the pull request changes the Notes (collab sidebar) feature so
+              that placing the caret inside an inline note marker in the editor content
+              selects/highlights the corresponding note in the Notes sidebar. It touches
+              packages/editor/src/components/collab-sidebar/format.js and extends
+              test/e2e/specs/editor/various/block-notes.spec.js to cover the behavior.
+
+              Pass only if the What/Why accurately describe the caret-to-sidebar
+              selection sync in plain language (not a vague file inventory), the testing
+              instructions are concrete editor steps ending in an observable result, and
+              the description stays succinct. Fail if it invents behavior that is not in
+              the change, buries the point in implementation detail, or pads testing
+              steps with environment setup.
+          threshold: 0.8
+          metric: Reviewer usefulness
+          provider:
+              id: file://providers/agent-provider.mjs
+              config:
+                  agent: codex
+                  working_dir: .
+
+tests:
+    - description: PR description for the Notes caret-to-sidebar selection sync commit
+      vars:
+          case: notes-caret-sidebar-sync
+
+evaluateOptions:
+    maxConcurrency: 1
+
+outputPath: results/raw/pr-skill-codex.json

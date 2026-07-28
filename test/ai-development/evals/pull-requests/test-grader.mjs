@@ -3,27 +3,22 @@
  * tokens on a live eval. Each case pairs a canned PR description with fake
  * transcript metadata and asserts which components pass and fail.
  *
- *   node scripts/test-grader.mjs
+ *   node pull-requests/test-grader.mjs
  */
+/* eslint-disable no-console */
 import fs from 'node:fs';
 import path from 'node:path';
 import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
 
 const require = createRequire( import.meta.url );
-const evalsDir = path.resolve(
-	path.dirname( fileURLToPath( import.meta.url ) ),
-	'..'
-);
+const evaluationDir = path.dirname( fileURLToPath( import.meta.url ) );
 const { gradePrDescription } = require(
-	path.join( evalsDir, 'assertions', 'grade-pr-description.cjs' )
+	path.join( evaluationDir, 'grade-pr-description.cjs' )
 );
 
 const fixture = ( name ) =>
-	fs.readFileSync(
-		path.join( evalsDir, 'fixtures', 'pr-descriptions', name ),
-		'utf8'
-	);
+	fs.readFileSync( path.join( evaluationDir, 'fixtures', name ), 'utf8' );
 
 const fullTranscript = {
 	fixtureCommit: 'abc123',
@@ -39,18 +34,6 @@ const cases = [
 		name: 'good description with full transcript passes everything',
 		output: fixture( 'good.md' ),
 		metadata: fullTranscript,
-		expectPass: true,
-		expectFailing: [],
-	},
-	{
-		name: 'native Skill invocation counts as hitting the skill',
-		output: fixture( 'good.md' ),
-		metadata: {
-			fixtureCommit: 'abc123',
-			reads: [ '/repo/.github/PULL_REQUEST_TEMPLATE.md' ],
-			commands: [ 'git show HEAD' ],
-			skillInvocations: [ '{"command":"pull-requests"}' ],
-		},
 		expectPass: true,
 		expectFailing: [],
 	},
@@ -155,3 +138,4 @@ for ( const testCase of cases ) {
 }
 
 process.exit( failures === 0 ? 0 : 1 );
+/* eslint-enable no-console */

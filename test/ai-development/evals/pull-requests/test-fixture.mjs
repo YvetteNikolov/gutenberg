@@ -1,9 +1,10 @@
+/* eslint-disable no-console */
 import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { createFixtureRepository } from '../providers/fixture-repo.mjs';
+import { createFixtureRepository } from './fixture-repo.mjs';
 
 const evalsDir = path.resolve(
 	path.dirname( fileURLToPath( import.meta.url ) ),
@@ -43,8 +44,8 @@ for ( const testCase of cases ) {
 			'test',
 			'ai-development',
 			'evals',
+			'pull-requests',
 			'fixtures',
-			'pr-descriptions',
 			'good.md'
 		);
 		const hasSkill = await fs
@@ -59,9 +60,14 @@ for ( const testCase of cases ) {
 			path.join( fixture.cwd, 'AGENTS.md' ),
 			'utf8'
 		);
+		const claude = await fs.readFile(
+			path.join( fixture.cwd, 'CLAUDE.md' ),
+			'utf8'
+		);
 
 		assert.equal( hasSkill, testCase.hasSkill );
 		assert.equal( hasEvalFixture, false );
+		assert.equal( claude, '@AGENTS.md\n' );
 		assert.equal(
 			agents.includes( 'skills/pull-requests/SKILL.md' ),
 			testCase.hasSkill
@@ -72,3 +78,4 @@ for ( const testCase of cases ) {
 		await fixture.cleanup();
 	}
 }
+/* eslint-enable no-console */

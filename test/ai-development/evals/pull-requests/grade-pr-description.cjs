@@ -42,13 +42,7 @@ function gradePrDescription( output, context ) {
 	].join( '\n' );
 
 	// Process checks: what did the agent actually consult?
-	// Hitting the skill counts either a native Skill-tool invocation (Claude
-	// discovers it via the .claude/skills stub) or reading the skill file.
-	const skillInvoked = ( metadata.skillInvocations || [] ).some( ( entry ) =>
-		/pull-requests/.test( entry )
-	);
-	const hitSkill =
-		skillInvoked || /skills\/pull-requests\/SKILL\.md/.test( evidence );
+	const hitSkill = /skills\/pull-requests\/SKILL\.md/.test( evidence );
 	const readTemplate = /PULL_REQUEST_TEMPLATE\.md/.test( evidence );
 	const inspectedDiff =
 		Boolean( metadata.fixtureCommit ) &&
@@ -121,8 +115,8 @@ function gradePrDescription( output, context ) {
 			'Hit the skill',
 			hitSkill,
 			hitSkill
-				? 'invoked or read the pull-requests skill'
-				: 'never invoked or read the pull-requests skill'
+				? 'read the pull-requests skill'
+				: 'never read the pull-requests skill'
 		),
 		check(
 			'Read the template',

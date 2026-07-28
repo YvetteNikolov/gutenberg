@@ -37,41 +37,24 @@ async function copyGuidance( sourceRoot, fixtureRoot, guidance ) {
 
 	await fs.writeFile( path.join( fixtureRoot, 'AGENTS.md' ), agents );
 	await fs.copyFile(
+		path.join( sourceRoot, 'CLAUDE.md' ),
+		path.join( fixtureRoot, 'CLAUDE.md' )
+	);
+	await fs.copyFile(
 		path.join( sourceRoot, '.github', 'PULL_REQUEST_TEMPLATE.md' ),
 		path.join( fixtureRoot, '.github', 'PULL_REQUEST_TEMPLATE.md' )
 	);
 
 	const skillDirectory = path.join( fixtureRoot, 'skills', 'pull-requests' );
-	const claudeSkillDirectory = path.join(
-		fixtureRoot,
-		'.claude',
-		'skills',
-		'pull-requests'
-	);
 
 	if ( guidance === 'candidate' ) {
 		await fs.mkdir( skillDirectory, { recursive: true } );
-		await fs.mkdir( claudeSkillDirectory, { recursive: true } );
 		await fs.copyFile(
 			path.join( sourceRoot, 'skills', 'pull-requests', 'SKILL.md' ),
 			path.join( skillDirectory, 'SKILL.md' )
 		);
-		await fs.copyFile(
-			path.join(
-				sourceRoot,
-				'.claude',
-				'skills',
-				'pull-requests',
-				'SKILL.md'
-			),
-			path.join( claudeSkillDirectory, 'SKILL.md' )
-		);
 	} else {
 		await fs.rm( skillDirectory, { recursive: true, force: true } );
-		await fs.rm( claudeSkillDirectory, {
-			recursive: true,
-			force: true,
-		} );
 	}
 }
 

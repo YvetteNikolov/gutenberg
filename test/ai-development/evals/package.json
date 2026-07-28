@@ -16,13 +16,13 @@
 		"url": "https://github.com/WordPress/gutenberg/issues"
 	},
 	"scripts": {
-		"test": "npm run test:grader && npm run test:fixture",
-		"test:grader": "node scripts/test-grader.mjs",
-		"test:fixture": "node scripts/test-fixture.mjs",
-		"eval:claude": "PROMPTFOO_DISABLE_TELEMETRY=1 PROMPTFOO_FAILED_TEST_EXIT_CODE=0 promptfoo eval --config promptfooconfig.pr-skill.claude.yaml --no-cache",
-		"eval:codex": "PROMPTFOO_DISABLE_TELEMETRY=1 PROMPTFOO_FAILED_TEST_EXIT_CODE=0 promptfoo eval --config promptfooconfig.pr-skill.codex.yaml --no-cache",
-		"report": "node scripts/summarize-results.mjs",
-		"report:record": "node scripts/summarize-results.mjs --record",
+		"test": "npm run test:pull-requests",
+		"test:pull-requests": "node pull-requests/test-grader.mjs && node pull-requests/test-fixture.mjs",
+		"validate:pull-requests": "promptfoo validate --config pull-requests/promptfooconfig.claude.yaml && promptfoo validate --config pull-requests/promptfooconfig.codex.yaml",
+		"eval:pull-requests:claude": "PROMPTFOO_DISABLE_TELEMETRY=1 PROMPTFOO_FAILED_TEST_EXIT_CODE=0 promptfoo eval --config pull-requests/promptfooconfig.claude.yaml --no-cache",
+		"eval:pull-requests:codex": "PROMPTFOO_DISABLE_TELEMETRY=1 PROMPTFOO_FAILED_TEST_EXIT_CODE=0 promptfoo eval --config pull-requests/promptfooconfig.codex.yaml --no-cache",
+		"report": "node shared/summarize-results.mjs",
+		"report:record": "node shared/summarize-results.mjs --record",
 		"view": "promptfoo view"
 	},
 	"devDependencies": {

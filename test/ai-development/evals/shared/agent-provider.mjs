@@ -15,15 +15,35 @@
 import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
-
-import { createFixtureRepository } from './fixture-repo.mjs';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const evalsDir = path.resolve(
 	path.dirname( fileURLToPath( import.meta.url ) ),
 	'..'
 );
 const sourceRoot = path.resolve( evalsDir, '../../..' );
+
+async function createSubjectFixture( config ) {
+	if ( ! config.fixture_module ) {
+		throw new Error( 'fixture_module is required for subject providers' );
+	}
+
+	const fixtureModulePath = path.resolve( evalsDir, config.fixture_module );
+	const fixtureModule = await import(
+		pathToFileURL( fixtureModulePath ).href
+	);
+	if ( typeof fixtureModule.createFixtureRepository !== 'function' ) {
+		throw new Error(
+			`${ config.fixture_module } must export createFixtureRepository`
+		);
+	}
+
+	return fixtureModule.createFixtureRepository( {
+		sourceRoot,
+		targetCommit: config.fixture_commit,
+		guidance: config.guidance,
+	} );
+}
 
 function subjectEnvironment() {
 	const allowed = [
@@ -52,7 +72,6 @@ async function runClaude( prompt, config ) {
 	const cwd = config.cwd;
 	const reads = [];
 	const commands = [];
-	const skillInvocations = [];
 	const denied = [];
 	let output = '';
 	let numTurns;
@@ -69,8 +88,8 @@ async function runClaude( prompt, config ) {
 			settingSources: judge
 				? []
 				: config.setting_sources ?? [ 'project' ],
-			skills: judge ? [] : config.skills ?? 'all',
-			tools: judge ? [] : [ 'Bash', 'Read', 'Glob', 'Grep', 'Skill' ],
+			skills: [],
+			tools: judge ? [] : [ 'Bash', 'Read', 'Glob', 'Grep' ],
 			maxTurns: judge ? 1 : config.max_turns ?? 50,
 			disallowedTools: [
 				'Write',
@@ -99,11 +118,7 @@ async function runClaude( prompt, config ) {
 						},
 				  },
 			canUseTool: async ( toolName, input ) => {
-				if (
-					[ 'Read', 'Glob', 'Grep', 'Skill', 'Bash' ].includes(
-						toolName
-					)
-				) {
+				if ( [ 'Read', 'Glob', 'Grep', 'Bash' ].includes( toolName ) ) {
 					return { behavior: 'allow', updatedInput: input };
 				}
 				denied.push(
@@ -129,8 +144,6 @@ async function runClaude( prompt, config ) {
 					reads.push( block.input.file_path );
 				} else if ( block.name === 'Bash' && block.input?.command ) {
 					commands.push( block.input.command );
-				} else if ( block.name === 'Skill' ) {
-					skillInvocations.push( JSON.stringify( block.input ) );
 				}
 			}
 		} else if ( message.type === 'result' ) {
@@ -150,7 +163,6 @@ async function runClaude( prompt, config ) {
 			model,
 			reads,
 			commands,
-			skillInvocations,
 			denied,
 			numTurns,
 			totalCostUsd,
@@ -232,11 +244,7 @@ export default class GutenbergAgentProvider {
 						} ),
 				};
 			} else {
-				fixture = await createFixtureRepository( {
-					sourceRoot,
-					targetCommit: this.config.fixture_commit,
-					guidance: this.config.guidance,
-				} );
+				fixture = await createSubjectFixture( this.config );
 			}
 
 			const response =
@@ -251,6 +259,7 @@ export default class GutenbergAgentProvider {
 					  } );
 			response.metadata = {
 				...response.metadata,
+				evaluation: this.config.evaluation,
 				guidance: fixture.guidance,
 				fixtureCommit: fixture.fixtureCommit,
 			};

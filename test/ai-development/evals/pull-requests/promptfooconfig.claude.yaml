@@ -15,30 +15,32 @@ prompts:
           markdown, with no preamble or commentary.
 
 providers:
-    - id: file://providers/agent-provider.mjs
+    - id: file://shared/agent-provider.mjs
       label: Claude Code with repo guidance
       config:
           agent: claude
+          evaluation: pull-requests
+          fixture_module: pull-requests/fixture-repo.mjs
           fixture_commit: 1f27df2962c8f459582eeb41435251713f30c810
           guidance: candidate
           setting_sources: ['project']
-          skills: ['pull-requests']
 
-    - id: file://providers/agent-provider.mjs
+    - id: file://shared/agent-provider.mjs
       label: Claude Code control guidance
       config:
           agent: claude
+          evaluation: pull-requests
+          fixture_module: pull-requests/fixture-repo.mjs
           fixture_commit: 1f27df2962c8f459582eeb41435251713f30c810
           guidance: control
           setting_sources: ['project']
-          skills: []
 
 defaultTest:
     options:
         bustCache: true
     assert:
         - type: javascript
-          value: file://assertions/grade-pr-description.cjs
+          value: file://pull-requests/grade-pr-description.cjs
           threshold: 1
           metric: Skill compliance checks
         - type: llm-rubric
@@ -61,7 +63,7 @@ defaultTest:
           threshold: 0.8
           metric: Reviewer usefulness
           provider:
-              id: file://providers/agent-provider.mjs
+              id: file://shared/agent-provider.mjs
               config:
                   agent: claude
                   role: judge
@@ -76,4 +78,4 @@ evaluateOptions:
     maxConcurrency: 1
     repeat: 2
 
-outputPath: results/raw/pr-skill-claude.json
+outputPath: results/raw/pull-requests-claude.json

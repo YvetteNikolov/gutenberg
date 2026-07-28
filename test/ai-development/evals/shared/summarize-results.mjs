@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import { execFile } from 'node:child_process';
 import fs from 'node:fs/promises';
 import path from 'node:path';
@@ -7,13 +8,47 @@ const execFileAsync = promisify( execFile );
 const resultFiles = process.argv
 	.slice( 2 )
 	.filter( ( argument ) => argument !== '--record' );
+
+async function discoverResultFiles() {
+	const entries = await fs.readdir( '.', { withFileTypes: true } );
+	const configFiles = [];
+	for ( const entry of entries ) {
+		if ( ! entry.isDirectory() || entry.name === 'node_modules' ) {
+			continue;
+		}
+		const names = await fs.readdir( entry.name );
+		configFiles.push(
+			...names
+				.filter( ( name ) =>
+					/^promptfooconfig\..+\.yaml$/.test( name )
+				)
+				.map( ( name ) => path.join( entry.name, name ) )
+		);
+	}
+
+	const discovered = [];
+	for ( const configFile of configFiles ) {
+		const config = await fs.readFile( configFile, 'utf8' );
+		const outputPath = config.match( /^outputPath:\s*(.+)$/m )?.[ 1 ];
+		if ( outputPath ) {
+			const exists = await fs
+				.access( outputPath )
+				.then( () => true )
+				.catch( () => false );
+			if ( exists ) {
+				discovered.push( outputPath );
+			}
+		}
+	}
+	return discovered.sort();
+}
+
 const files =
-	resultFiles.length > 0
-		? resultFiles
-		: [
-				'results/raw/pr-skill-claude.json',
-				'results/raw/pr-skill-codex.json',
-		  ];
+	resultFiles.length > 0 ? resultFiles : await discoverResultFiles();
+
+if ( files.length === 0 ) {
+	throw new Error( 'No eval result files found. Run an eval first.' );
+}
 
 const runs = [];
 for ( const file of files ) {
@@ -38,6 +73,11 @@ for ( const file of files ) {
 		runs.push( {
 			file,
 			label,
+			evaluation:
+				metadata.evaluation ||
+				( /^pr-skill-|^pull-requests-/.test( path.basename( file ) )
+					? 'pull-requests'
+					: 'unknown' ),
 			guidance,
 			model: metadata.model || 'unknown',
 			pass: Boolean( result.success ),
@@ -50,9 +90,10 @@ for ( const file of files ) {
 
 const groups = Object.values(
 	runs.reduce( ( accumulated, run ) => {
-		const key = `${ run.label }|${ run.guidance }|${ run.model }`;
+		const key = `${ run.evaluation }|${ run.label }|${ run.guidance }|${ run.model }`;
 		accumulated[ key ] ||= {
 			label: run.label,
+			evaluation: run.evaluation,
 			guidance: run.guidance,
 			model: run.model,
 			runs: 0,
@@ -70,6 +111,7 @@ const groups = Object.values(
 	}, {} )
 ).map( ( group ) => ( {
 	label: group.label,
+	evaluation: group.evaluation,
 	guidance: group.guidance,
 	model: group.model,
 	runs: group.runs,
@@ -81,6 +123,7 @@ const groups = Object.values(
 
 console.table(
 	groups.map( ( group ) => ( {
+		evaluation: group.evaluation,
 		provider: group.label,
 		guidance: group.guidance,
 		model: group.model,
@@ -92,25 +135,33 @@ console.table(
 	} ) )
 );
 
-for ( const agent of [ 'Claude', 'Codex' ] ) {
-	const candidate = groups.find(
-		( group ) =>
-			group.label.includes( agent ) && group.guidance === 'candidate'
-	);
-	const control = groups.find(
-		( group ) =>
-			group.label.includes( agent ) && group.guidance === 'control'
-	);
-	if ( candidate && control ) {
-		console.log(
-			`${ agent } candidate-control deltas: total ${ (
-				candidate.meanScore - control.meanScore
-			).toFixed( 3 ) }, compliance ${ (
-				candidate.meanComplianceScore - control.meanComplianceScore
-			).toFixed( 3 ) }, usefulness ${ (
-				candidate.meanUsefulnessScore - control.meanUsefulnessScore
-			).toFixed( 3 ) }`
+for ( const evaluation of new Set(
+	groups.map( ( group ) => group.evaluation )
+) ) {
+	for ( const agent of [ 'Claude', 'Codex' ] ) {
+		const candidate = groups.find(
+			( group ) =>
+				group.evaluation === evaluation &&
+				group.label.includes( agent ) &&
+				group.guidance === 'candidate'
 		);
+		const control = groups.find(
+			( group ) =>
+				group.evaluation === evaluation &&
+				group.label.includes( agent ) &&
+				group.guidance === 'control'
+		);
+		if ( candidate && control ) {
+			console.log(
+				`${ evaluation } / ${ agent } candidate-control deltas: total ${ (
+					candidate.meanScore - control.meanScore
+				).toFixed( 3 ) }, compliance ${ (
+					candidate.meanComplianceScore - control.meanComplianceScore
+				).toFixed( 3 ) }, usefulness ${ (
+					candidate.meanUsefulnessScore - control.meanUsefulnessScore
+				).toFixed( 3 ) }`
+			);
+		}
 	}
 }
 
@@ -131,3 +182,4 @@ if ( process.argv.includes( '--record' ) ) {
 	);
 	console.log( `Recorded summary in ${ historyPath }` );
 }
+/* eslint-enable no-console */

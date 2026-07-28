@@ -19,13 +19,14 @@ does not contain this eval's configuration, graders, or golden answers.
 
 **Process** (from the transcript — did the agent do the right things?)
 
--   Hit the skill: invoked the skill natively (Claude discovers it through the
-    `.claude/skills/pull-requests` stub) or read `skills/pull-requests/SKILL.md`
+-   Follow the shared instruction route: Claude loads `CLAUDE.md`, which points
+    directly to `AGENTS.md`, and both agents read
+    `skills/pull-requests/SKILL.md`
 -   Read the template: read `.github/PULL_REQUEST_TEMPLATE.md`
 -   Inspected the diff: ran `git show`/`diff`/`log` (the skill's
     "describe the committed diff" rule)
 
-**Output** (deterministic, `assertions/grade-pr-description.cjs`)
+**Output** (deterministic, `pull-requests/grade-pr-description.cjs`)
 
 -   Template sections present and in order (What / Why / How / Testing Instructions)
 -   Keyboard testing section (this fixture is a UI/caret change, where the
@@ -53,6 +54,30 @@ The eval scripts keep assertion failures in the report but do not return a
 failing process status merely because a control row is red. Provider/runtime
 errors still fail the command.
 
+## Organization
+
+Each evaluation target owns everything specific to that target:
+
+```text
+evals/
+├── shared/
+│   ├── agent-provider.mjs
+│   └── summarize-results.mjs
+└── pull-requests/
+    ├── fixtures/
+    ├── fixture-repo.mjs
+    ├── grade-pr-description.cjs
+    ├── promptfooconfig.claude.yaml
+    ├── promptfooconfig.codex.yaml
+    ├── test-fixture.mjs
+    └── test-grader.mjs
+```
+
+The shared provider loads the fixture builder named by each config's
+`fixture_module`. The reporter discovers configured `outputPath` values and
+groups results by `evaluation`, so adding a target does not require changing
+shared code.
+
 ## Running
 
 ```bash
@@ -62,9 +87,12 @@ npm --prefix test/ai-development/evals install
 # Fast, free: test the grader and disposable fixtures.
 npm run test:agent-evals
 
+# Validate the Promptfoo configs without running live agents.
+npm --prefix test/ai-development/evals run validate:pull-requests
+
 # Live agent runs (minutes + real tokens each):
-npm run test:agent-evals:claude
-npm run test:agent-evals:codex
+npm run test:agent-evals:pull-requests:claude
+npm run test:agent-evals:pull-requests:codex
 
 # Summarize pass rates plus separate compliance and usefulness deltas.
 npm --prefix test/ai-development/evals run report
@@ -100,8 +128,10 @@ standard setup working without requiring a second Node.js installation.
 ## Adding an eval for a new skill
 
 1. Pick a pinned commit where following the skill visibly changes the output.
-2. Add a grader in `assertions/` with canned good/bad samples in `fixtures/`
-   and cases in `scripts/test-grader.mjs`; make the grader tests pass before
-   burning agent tokens.
-3. Add a promptfoo config wiring the provider, the grader, and an `llm-rubric`
-   for the judgment calls regexes can't make.
+2. Add a directory named for the skill, following the `pull-requests/` shape.
+3. Add a fixture builder, deterministic grader, canned samples, and tests
+   inside that directory; make those tests pass before burning agent tokens.
+4. Add Claude and Codex configs that set a unique `evaluation`, reference the
+   target's `fixture_module`, and combine the grader with an `llm-rubric` for
+   judgment calls regexes cannot make.
+5. Add the target's deterministic and live commands to `package.json`.

@@ -1,43 +1,55 @@
 /**
  * Custom promptfoo provider that runs a coding agent (Claude Code or Codex)
- * inside the Gutenberg checkout and captures its transcript.
+ * inside a disposable Gutenberg fixture and captures its transcript.
  *
  * Beyond the final answer, it returns metadata the assertions use to verify
  * *process*, not just output:
  *   - `reads`:    files the agent opened with its Read tool (Claude only)
  *   - `commands`: shell commands the agent ran (both agents)
- *   - `denied`:   commands/tools the read-only guard refused
+ *   - `denied`:   tools the sandbox policy refused
  *
- * The agent is never allowed to modify the checkout: Claude runs behind a
- * canUseTool guard that only permits read-only commands; Codex runs in its
- * built-in read-only sandbox.
+ * Subject agents may modify the disposable fixture, which is deleted after the
+ * run. Network access is disabled and the developer's checkout is never used as
+ * the subject working directory.
  */
+import fs from 'node:fs/promises';
+import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+
+import { createFixtureRepository } from './fixture-repo.mjs';
 
 const evalsDir = path.resolve(
 	path.dirname( fileURLToPath( import.meta.url ) ),
 	'..'
 );
+const sourceRoot = path.resolve( evalsDir, '../../..' );
 
-// Read-only commands the Claude agent may run. Each segment of a compound
-// command must match, so `git show X && rm -rf .` is refused.
-const READ_ONLY_COMMAND = /^\s*(git\s+(show|log|diff|status|rev-parse|branch|cat-file)\b|cat\s|ls\b|rg\s|grep\s|head\b|tail\b|wc\b|find\s|sed\s+-n\s|awk\s)/;
-
-function isReadOnlyCommand( command ) {
-	const segments = String( command )
-		.split( /&&|\|\||;|\|/ )
-		.map( ( segment ) => segment.trim() )
-		.filter( Boolean );
-	return (
-		segments.length > 0 &&
-		segments.every( ( segment ) => READ_ONLY_COMMAND.test( segment ) )
+function subjectEnvironment() {
+	const allowed = [
+		'ANTHROPIC_API_KEY',
+		'CLAUDE_CODE_OAUTH_TOKEN',
+		'CODEX_API_KEY',
+		'HOME',
+		'LANG',
+		'LC_ALL',
+		'OPENAI_API_KEY',
+		'PATH',
+		'SHELL',
+		'TERM',
+		'TMPDIR',
+		'USER',
+	];
+	return Object.fromEntries(
+		allowed
+			.filter( ( name ) => process.env[ name ] !== undefined )
+			.map( ( name ) => [ name, process.env[ name ] ] )
 	);
 }
 
 async function runClaude( prompt, config ) {
 	const { query } = await import( '@anthropic-ai/claude-agent-sdk' );
-	const cwd = path.resolve( evalsDir, config.working_dir || '../../..' );
+	const cwd = config.cwd;
 	const reads = [];
 	const commands = [];
 	const skillInvocations = [];
@@ -45,28 +57,62 @@ async function runClaude( prompt, config ) {
 	let output = '';
 	let numTurns;
 	let totalCostUsd;
+	let model;
+
+	const judge = config.role === 'judge';
 
 	const response = query( {
 		prompt,
 		options: {
 			cwd,
 			model: config.model || 'sonnet',
-			settingSources: config.setting_sources ?? [ 'project' ],
-			...( config.skills ? { skills: config.skills } : {} ),
-			maxTurns: config.max_turns ?? 50,
-			disallowedTools: [ 'Write', 'Edit', 'NotebookEdit', 'Task', 'WebFetch', 'WebSearch' ],
+			settingSources: judge
+				? []
+				: config.setting_sources ?? [ 'project' ],
+			skills: judge ? [] : config.skills ?? 'all',
+			tools: judge ? [] : [ 'Bash', 'Read', 'Glob', 'Grep', 'Skill' ],
+			maxTurns: judge ? 1 : config.max_turns ?? 50,
+			disallowedTools: [
+				'Write',
+				'Edit',
+				'NotebookEdit',
+				'Task',
+				'WebFetch',
+				'WebSearch',
+			],
+			env: subjectEnvironment(),
+			sandbox: judge
+				? undefined
+				: {
+						enabled: true,
+						failIfUnavailable: true,
+						autoAllowBashIfSandboxed: true,
+						allowUnsandboxedCommands: false,
+						network: {
+							allowedDomains: [],
+							strictAllowlist: true,
+						},
+						filesystem: {
+							allowManagedReadPathsOnly: true,
+							allowRead: [ cwd ],
+							allowWrite: [ cwd ],
+						},
+				  },
 			canUseTool: async ( toolName, input ) => {
-				if ( [ 'Read', 'Glob', 'Grep', 'Skill' ].includes( toolName ) ) {
+				if (
+					[ 'Read', 'Glob', 'Grep', 'Skill', 'Bash' ].includes(
+						toolName
+					)
+				) {
 					return { behavior: 'allow', updatedInput: input };
 				}
-				if ( toolName === 'Bash' && isReadOnlyCommand( input.command ) ) {
-					return { behavior: 'allow', updatedInput: input };
-				}
-				denied.push( `${ toolName }: ${ input.command || input.file_path || '' }` );
+				denied.push(
+					`${ toolName }: ${ input.command || input.file_path || '' }`
+				);
 				return {
 					behavior: 'deny',
 					message:
-						'This is a read-only eval run. Only file reads and read-only git commands (show, log, diff, status) are allowed.',
+						'This tool is not available in the isolated eval environment.',
 				};
 			},
 		},
@@ -74,6 +120,7 @@ async function runClaude( prompt, config ) {
 
 	for await ( const message of response ) {
 		if ( message.type === 'assistant' ) {
+			model = message.message?.model || model;
 			for ( const block of message.message?.content ?? [] ) {
 				if ( block.type !== 'tool_use' ) {
 					continue;
@@ -100,6 +147,7 @@ async function runClaude( prompt, config ) {
 		output,
 		metadata: {
 			agent: 'claude',
+			model,
 			reads,
 			commands,
 			skillInvocations,
@@ -112,17 +160,19 @@ async function runClaude( prompt, config ) {
 
 async function runCodex( prompt, config ) {
 	const { Codex } = await import( '@openai/codex-sdk' );
-	const cwd = path.resolve( evalsDir, config.working_dir || '../../..' );
+	const cwd = config.cwd;
 	const commands = [];
 	const fileChanges = [];
 	let output = '';
 
-	const codex = new Codex();
+	const codex = new Codex( { env: subjectEnvironment() } );
 	const thread = codex.startThread( {
 		workingDirectory: cwd,
-		sandboxMode: 'read-only',
+		sandboxMode: 'workspace-write',
 		skipGitRepoCheck: true,
 		networkAccessEnabled: false,
+		webSearchMode: 'disabled',
+		approvalPolicy: 'never',
 		...( config.model ? { model: config.model } : {} ),
 	} );
 
@@ -135,7 +185,9 @@ async function runCodex( prompt, config ) {
 		if ( item.type === 'command_execution' ) {
 			commands.push( item.command );
 		} else if ( item.type === 'file_change' ) {
-			fileChanges.push( ...item.changes.map( ( change ) => change.path ) );
+			fileChanges.push(
+				...item.changes.map( ( change ) => change.path )
+			);
 		} else if ( item.type === 'agent_message' ) {
 			output = item.text;
 		}
@@ -143,7 +195,13 @@ async function runCodex( prompt, config ) {
 
 	return {
 		output,
-		metadata: { agent: 'codex', reads: [], commands, fileChanges },
+		metadata: {
+			agent: 'codex',
+			model: config.model || 'cli-default',
+			reads: [],
+			commands,
+			fileChanges,
+		},
 	};
 }
 
@@ -159,12 +217,48 @@ export default class GutenbergAgentProvider {
 	}
 
 	async callApi( prompt ) {
+		let fixture;
 		try {
-			return this.config.agent === 'codex'
-				? await runCodex( prompt, this.config )
-				: await runClaude( prompt, this.config );
+			if ( this.config.role === 'judge' ) {
+				const judgeRoot = await fs.mkdtemp(
+					path.join( os.tmpdir(), 'gutenberg-agent-judge-' )
+				);
+				fixture = {
+					cwd: judgeRoot,
+					cleanup: () =>
+						fs.rm( judgeRoot, {
+							recursive: true,
+							force: true,
+						} ),
+				};
+			} else {
+				fixture = await createFixtureRepository( {
+					sourceRoot,
+					targetCommit: this.config.fixture_commit,
+					guidance: this.config.guidance,
+				} );
+			}
+
+			const response =
+				this.config.agent === 'codex'
+					? await runCodex( prompt, {
+							...this.config,
+							cwd: fixture.cwd,
+					  } )
+					: await runClaude( prompt, {
+							...this.config,
+							cwd: fixture.cwd,
+					  } );
+			response.metadata = {
+				...response.metadata,
+				guidance: fixture.guidance,
+				fixtureCommit: fixture.fixtureCommit,
+			};
+			return response;
 		} catch ( error ) {
 			return { error: String( error?.stack || error ) };
+		} finally {
+			await fixture?.cleanup();
 		}
 	}
 }

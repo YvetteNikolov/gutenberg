@@ -1,39 +1,37 @@
 # Eval: does the pull-requests skill make Claude Code author PR descriptions
 # that follow .github/PULL_REQUEST_TEMPLATE.md and skills/pull-requests/SKILL.md?
 #
-# Two providers run the identical task in the real checkout:
-#   - "with repo guidance" loads project settings (CLAUDE.md -> AGENTS.md), so the
-#     agent can discover the skill. Expected green.
-#   - "baseline" loads no repo guidance. Expected red — it demonstrates the eval
-#     actually discriminates, like the v1/v2 comparison in the evals workshop.
+# Two providers run the identical task in disposable fixture repositories. The
+# fixtures differ only in whether the pull-requests skill and its routing are
+# present, so the candidate-control delta measures the guidance under test.
 description: Verify the pull-requests skill is discovered, followed, and produces a review-ready PR description
 
 prompts:
     - label: Author a PR description
       raw: |
-          You are preparing the pull request for work that is already committed in this
-          repository. The pull request contains exactly one commit:
-
-              1f27df2962c8f459582eeb41435251713f30c810
-
-          Author the pull request description. Your final answer must be only the PR
-          description markdown, with no preamble or commentary. Do not modify any files.
+          The fixture repository contains a baseline commit followed by exactly one
+          pull request commit at HEAD. Author the pull request description for the
+          committed change at HEAD. Your final answer must be only the PR description
+          markdown, with no preamble or commentary.
 
 providers:
     - id: file://providers/agent-provider.mjs
       label: Claude Code with repo guidance
       config:
           agent: claude
-          working_dir: ../../..
+          fixture_commit: 1f27df2962c8f459582eeb41435251713f30c810
+          guidance: candidate
           setting_sources: ['project']
           skills: ['pull-requests']
 
     - id: file://providers/agent-provider.mjs
-      label: Claude Code baseline (no repo guidance)
+      label: Claude Code control guidance
       config:
           agent: claude
-          working_dir: ../../..
-          setting_sources: []
+          fixture_commit: 1f27df2962c8f459582eeb41435251713f30c810
+          guidance: control
+          setting_sources: ['project']
+          skills: []
 
 defaultTest:
     options:
@@ -66,8 +64,8 @@ defaultTest:
               id: file://providers/agent-provider.mjs
               config:
                   agent: claude
-                  working_dir: .
-                  setting_sources: []
+                  role: judge
+                  model: sonnet
 
 tests:
     - description: PR description for the Notes caret-to-sidebar selection sync commit
@@ -76,5 +74,6 @@ tests:
 
 evaluateOptions:
     maxConcurrency: 1
+    repeat: 2
 
 outputPath: results/raw/pr-skill-claude.json

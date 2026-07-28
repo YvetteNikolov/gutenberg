@@ -1,3 +1,0 @@
-Reading additional input from stdin...
-[2m2026-07-27T21:00:36.386467Z[0m [33m WARN[0m [2mcodex_core_plugins::manifest[0m[2m:[0m ignoring interface.defaultPrompt: prompt must be at most 128 characters [3mpath[0m[2m=[0mfile:///Users/jj/.codex/plugins/cache/openai-curated-remote/workspace-agents/0.1.13/.codex-plugin/plugin.json
-[2m2026-07-27T21:00:36.387745Z[0m [33m WARN[0m [2mcodex_core_plugins::manifest[0m[2m:[0m ignoring interface.defaultPrompt: prompt must be at most 128 characters [3mpath[0m[2m=[0mfile:///Users/jj/.codex/plugins/cache/openai-curated-remote/workspace-agents/0.1.13/.codex-plugin/plugin.json

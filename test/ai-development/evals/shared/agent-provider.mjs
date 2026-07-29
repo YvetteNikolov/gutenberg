@@ -16,8 +16,8 @@
  *   fixture_module   Path (relative to `evals/`) of a module exporting
  *                    `createFixtureRepository`.
  *   fixture_commit   Optional commit override for the fixture module.
- *   guidance         Guidance variant handed to the fixture module.
- *   evaluation       Eval target name, recorded for the reporter.
+ *   fixture_options  Optional extra options forwarded to the fixture module,
+ *                    for targets that build more than one variant.
  *
  * Subject agents may modify the fixture, which is deleted after the run. The
  * developer's checkout is never used as the subject working directory.
@@ -129,7 +129,7 @@ export default class GutenbergAgentProvider {
 			fixture = await createFixtureRepository( {
 				sourceRoot,
 				targetCommit: this.config.fixture_commit,
-				guidance: this.config.guidance,
+				...( this.config.fixture_options || {} ),
 			} );
 
 			const agent = await load( this.config.provider, {
@@ -150,11 +150,8 @@ export default class GutenbergAgentProvider {
 				...response,
 				metadata: {
 					...( response.metadata || {} ),
-					evaluation: this.config.evaluation,
-					// Recorded so the reporter can pair candidate with control
-					// from data instead of pattern-matching display labels.
-					agentProvider: this.config.provider,
-					guidance: fixture.guidance,
+					// Which throwaway repository the run actually saw, so a
+					// surprising result can be traced back to its fixture.
 					fixtureCommit: fixture.fixtureCommit,
 				},
 			};

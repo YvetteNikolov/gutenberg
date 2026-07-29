@@ -16,10 +16,8 @@
 		"url": "https://github.com/WordPress/gutenberg/issues"
 	},
 	"scripts": {
-		"validate:pull-requests": "promptfoo validate --config pull-requests/promptfooconfig.claude.yaml && promptfoo validate --config pull-requests/promptfooconfig.codex.yaml",
-		"eval:pull-requests:claude": "PROMPTFOO_DISABLE_TELEMETRY=1 PROMPTFOO_FAILED_TEST_EXIT_CODE=0 promptfoo eval --config pull-requests/promptfooconfig.claude.yaml --no-cache",
-		"eval:pull-requests:codex": "PROMPTFOO_DISABLE_TELEMETRY=1 PROMPTFOO_FAILED_TEST_EXIT_CODE=0 promptfoo eval --config pull-requests/promptfooconfig.codex.yaml --no-cache",
-		"report": "node shared/summarize-results.mjs results/raw/pull-requests-claude.json results/raw/pull-requests-codex.json",
+		"validate": "promptfoo validate config --config */promptfooconfig.yaml",
+		"eval": "PROMPTFOO_DISABLE_TELEMETRY=1 PROMPTFOO_FAILED_TEST_EXIT_CODE=0 promptfoo eval --no-cache --config",
 		"view": "promptfoo view"
 	},
 	"devDependencies": {

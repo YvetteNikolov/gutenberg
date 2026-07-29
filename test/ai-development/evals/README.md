@@ -3,105 +3,92 @@
 A [promptfoo](https://promptfoo.dev) harness for measuring whether the agent
 skills in `skills/` are discovered and followed.
 
-**This is currently a scaffold.** The wiring is real; what the eval measures is
-a placeholder. See [Filling in an eval](#filling-in-an-eval).
-
 ## The one architectural rule
 
 **The fixture is ours. Everything else is promptfoo's.**
 
-Rebuilding a historical Gutenberg commit into a throwaway repository, with a
-guidance variant overlaid, is something promptfoo cannot know about — so we own
-it. Running an agent, capturing its tool calls, and normalising those calls
-across vendors are solved problems, so we do not.
+Rebuilding a Gutenberg commit into a throwaway repository is something promptfoo
+cannot know about, so we own it. Running an agent, capturing its tool calls, and
+normalising those calls across vendors are solved problems, so we do not.
 
-Concretely, promptfoo's built-in agent providers populate
-`metadata.toolCalls` and `metadata.skillCalls`, and its `skill-used`,
-`trajectory:*` and `word-count` assertions read them. Nothing here parses a raw
+promptfoo's built-in agent providers populate `metadata.toolCalls` and
+`metadata.skillCalls`, and its assertions read them. Nothing here parses a raw
 shell string or defines its own transcript shape.
 
 ```text
-promptfooconfig.<agent>.yaml
+testing/promptfooconfig.yaml
         │
-        ├─ providers ──► shared/agent-provider.mjs        (ours: ~130 lines)
+        ├─ providers ──► shared/agent-provider.mjs      (ours, ~130 lines)
         │                   │
-        │                   ├─ build fixture ────────────► pull-requests/fixture-repo.mjs
-        │                   │                                  └─► shared/fixture-repo.mjs
-        │                   ├─ delegate ─────────────────► anthropic:claude-code
-        │                   │                               openai:codex-sdk    (promptfoo)
-        │                   └─ merge fixture metadata, clean up
+        │                   ├─ build fixture ──────────► testing/fixture-repo.mjs
+        │                   │                               └─► shared/fixture-repo.mjs
+        │                   ├─ delegate ───────────────► anthropic:claude-code
+        │                   │                             openai:codex-sdk   (promptfoo)
+        │                   └─ clean up
         │
-        └─ defaultTest ─► default-test.yaml                (promptfoo built-ins only)
+        └─ tests ──────► built-in assertions only
 ```
 
-The package depends on `promptfoo` and nothing else — no agent SDKs, because
-we no longer invoke them.
+The package depends on `promptfoo` and nothing else — no agent SDKs, because we
+no longer invoke them.
 
 ## Why the wrapper provider exists
 
 It is the only custom runtime code, and it exists for one reason: the fixture
-must be built per run _and_ per provider, and promptfoo offers no seam for that.
+must be built per run, and promptfoo offers no seam for that.
 
 -   `extensions` `beforeEach` hooks receive only `{ test }` — no provider — so a
-    hook cannot know whether to build the candidate or the control fixture.
+    hook cannot vary the fixture per provider.
 -   Provider config is not rendered with test vars, and providers are
     instantiated once per suite, so a per-run `working_dir` cannot be passed
     through config.
 
-So the wrapper builds the fixture, sets `working_dir`, hands off to the native
-provider, and deletes the fixture in a `finally`. It does not touch the agent's
-output or metadata beyond adding four fields the reporter needs.
+So the wrapper builds the fixture, sets `working_dir`, confines the sandbox to
+it, hands off to the native provider, and deletes the fixture in a `finally`. It
+does not touch the agent's output or metadata beyond recording which fixture
+commit the run saw.
 
 If promptfoo later exposes the provider in extension hooks, or renders provider
 config per test, this file can be deleted.
 
 ## Layers
 
-| Path                                   | Owns                                                                                                           |
-| -------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
-| `shared/agent-provider.mjs`            | Fixture lifecycle and delegation. Agent-agnostic — `provider:` names the native promptfoo provider.            |
-| `shared/fixture-repo.mjs`              | Rebuilding any commit as a disposable two-commit repo. Knows nothing about any eval.                           |
-| `shared/summarize-results.mjs`         | The candidate-control delta — the only analysis promptfoo does not do. Use `npm run view` for everything else. |
-| `pull-requests/fixture-repo.mjs`       | The guidance overlay this target varies, and `TARGET_COMMIT`.                                                  |
-| `pull-requests/default-test.yaml`      | Grading contract, shared by both agent configs.                                                                |
-| `pull-requests/prompt.md`              | Task prompt, shared by both agent configs.                                                                     |
-| `pull-requests/promptfooconfig.*.yaml` | Only what is agent-specific: providers, description, `outputPath`.                                             |
+| Path                            | Owns                                                                                                |
+| ------------------------------- | --------------------------------------------------------------------------------------------------- |
+| `shared/agent-provider.mjs`     | Fixture lifecycle and delegation. Agent-agnostic — `provider:` names the native promptfoo provider. |
+| `shared/fixture-repo.mjs`       | Rebuilding a commit as a disposable repo. Knows nothing about any eval.                             |
+| `<target>/fixture-repo.mjs`     | The commit under test, and any per-target overlay.                                                  |
+| `<target>/promptfooconfig.yaml` | Everything else: prompt, providers, assertions.                                                     |
 
-Adding an agent is a config change. Adding an eval target means a new directory
-with a fixture module, a prompt, and a grading contract — no shared code
-changes.
+One config per target holds every agent, so the prompt and assertions cannot
+drift between them. Adding an agent is a provider block; adding a target is a
+directory with two files.
 
-## The candidate/control design
+## The testing eval
 
-Each config runs the same task twice against fixtures that differ in exactly one
-way:
+`skills/testing/SKILL.md` is a router: it defers to `references/jest.md`,
+`references/php.md` or `references/e2e.md` depending on the kind of test. The
+eval asks for an end-to-end test and checks the agent takes the e2e branch and
+leaves the other two unread — a progressive-disclosure check.
 
--   **Candidate** — the skill and its `AGENTS.md` routing are present.
--   **Control** — both removed; every other repository instruction identical.
-
-The per-metric delta between the two arms is the output that matters, not
-whether any single row is green. `skill-used` is _expected_ to fail on the
-control arm — that failure is the measurement.
-
-The control fixture throws if the routing fragment it strips is not found in
-`AGENTS.md`, so a reworded instruction cannot silently turn the control into a
-duplicate of the candidate.
+`skill-used` cannot express this, because the skill is `testing` either way and
+the distinction is which reference was opened. So each assertion uses
+`transform` to reach `metadata.toolCalls` and matches a path with a built-in
+`contains` / `not-contains`. No custom assertion files.
 
 ## Isolation
 
 Subject agents run in a disposable repository with network and web search
 disabled, and may write only inside that fixture, which is deleted afterwards.
-The developer's checkout is never the working directory. The fixture contains
-the Gutenberg source and guidance needed for the task, but not this eval's
-configuration or grading contract.
+The developer's checkout is never the working directory. The fixture is built by
+`git archive`, so it contains only tracked files — this eval's own config is
+never visible to the agent.
 
-Isolation is configured on the native providers (`sandbox_mode`,
+Isolation is configured on the native providers (`sandbox`, `sandbox_mode`,
 `network_access_enabled`, `setting_sources`) rather than enforced by our code.
-
-> **Unverified:** the `sandbox` sub-schema for `anthropic:claude-code` has not
-> been confirmed against an installed 0.121.x. Network isolation for the Claude
-> arm must be set before the first live run — see the `TODO` in
-> `promptfooconfig.claude.yaml`. The Codex arm is fully specified.
+The Claude `sandbox` block is forwarded to the Claude Agent SDK verbatim, so it
+uses the SDK's camelCase keys while everything else in `provider_config` is
+snake_case; the wrapper fills in its filesystem allowlists with the fixture path.
 
 ## Conventions worth knowing
 
@@ -118,47 +105,31 @@ Isolation is configured on the native providers (`sandbox_mode`,
 ```bash
 npm --prefix test/ai-development/evals install
 
-# Validate config wiring without running agents.
-npm --prefix test/ai-development/evals run validate:pull-requests
+# Validate every target's wiring without running agents.
+npm --prefix test/ai-development/evals run validate
 
-# Live agent runs (minutes + real tokens each).
-npm run test:agent-evals:pull-requests:claude
-npm run test:agent-evals:pull-requests:codex
+# Live run (minutes + real tokens). Add --filter-providers to pick one agent.
+npm run test:agent-evals testing/promptfooconfig.yaml
+npm run test:agent-evals testing/promptfooconfig.yaml -- --filter-providers claude
 
-# Candidate-control delta per metric.
-npm --prefix test/ai-development/evals run report
-
-# Full results table, transcripts and per-run detail.
+# Results table, transcripts and per-run detail.
 npm --prefix test/ai-development/evals run view
 ```
 
-The eval scripts keep assertion failures in the report but do not fail the
-process merely because a control row is red. Provider and runtime errors still
-fail the command.
+Eval runs keep assertion failures in the report but do not fail the process on a
+red row. Provider and runtime errors still fail the command.
 
 `results/` is gitignored.
 
-## Filling in an eval
+## Adding an eval target
 
-The scaffold deliberately ships a placeholder rubric and a trivial
-`trajectory:tool-used` assertion. To make it measure something:
+1. Add a directory named for the skill under test.
+2. Add `fixture-repo.mjs` exporting `createFixtureRepository`, composing
+   `shared/fixture-repo.mjs`. Pass an `overlay` callback if the fixture needs
+   files added or removed beyond what the commit already contains.
+3. Add `promptfooconfig.yaml` with a provider block per agent, and assertions —
+   preferring built-ins (`skill-used`, `trajectory:*`, `word-count`,
+   `contains`), reaching `metadata` via `transform` where a path or tool
+   argument is what matters.
 
-1. Pick a pinned commit where following the skill visibly changes the output,
-   and set `TARGET_COMMIT`.
-2. Write the task prompt in `prompt.md`.
-3. Build the grading contract in `default-test.yaml`, preferring built-ins
-   (`skill-used`, `trajectory:*`, `word-count`, `contains-all`, `regex`) and
-   dropping to a `javascript` assertion over `metadata.toolCalls` only where no
-   built-in fits.
-4. Add tests for whatever custom assertion code step 3 required.
-
-## Adding an eval for a new skill
-
-1. Add a directory named for the skill, following the `pull-requests/` shape.
-2. Add a fixture module composing `shared/fixture-repo.mjs` with an `overlay`
-   for the guidance being varied.
-3. Add `prompt.md` and `default-test.yaml`.
-4. Add thin Claude and Codex configs that set a unique `evaluation`, name the
-   native `provider`, reference the target's `fixture_module`, and point
-   `defaultTest` at the shared file.
-5. Add the target's live commands to `package.json`.
+No shared code or `package.json` changes are needed.

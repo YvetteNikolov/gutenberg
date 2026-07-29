@@ -13,59 +13,52 @@ prompts:
     - id: file://prompt.md
       label: Add an e2e test
 
+extensions:
+    - file://../../lib/workspace-extension.mjs:extensionHook
+
 providers:
-    # The wrapper owns only the disposable fixture; `provider` names the
-    # built-in promptfoo provider that runs the agent and normalises its
-    # trajectory into metadata.toolCalls.
-    - id: file://../../lib/agent-provider.mjs
+    - id: anthropic:claude-agent-sdk
       label: claude
       config:
-          provider: anthropic:claude-code
-          fixture_module: fixture.mjs
-          provider_config:
-              # promptfoo refuses to start without ANTHROPIC_API_KEY unless told
-              # otherwise. Opt out so the Claude CLI authenticates the way it
-              # normally does — a subscription login in the OS keychain — rather
-              # than requiring a separate API key just to run evals.
-              apiKeyRequired: false
-              model: sonnet
-              max_turns: 30
-              # Only project-level instructions, so the developer's own
-              # ~/.claude guidance cannot leak into the subject.
-              setting_sources: ['project']
-              # With `working_dir` set, promptfoo defaults the allowlist to
-              # Read/Grep/Glob/LS, so writes are denied and the task cannot be
-              # completed. Bash is auto-approved separately by the sandbox's
-              # autoAllowBashIfSandboxed below.
-              append_allowed_tools: ['Edit', 'Write']
-              disallowed_tools: ['Task', 'WebFetch', 'WebSearch']
-              # Forwarded to the Claude Agent SDK verbatim, so these keys are
-              # the SDK's camelCase `SandboxSettings`. The wrapper fills in
-              # filesystem allowRead/allowWrite with the fixture path.
-              sandbox:
-                  enabled: true
-                  failIfUnavailable: true
-                  autoAllowBashIfSandboxed: true
-                  allowUnsandboxedCommands: false
-                  network:
-                      allowedDomains: []
-                      allowManagedDomainsOnly: true
-                  filesystem:
-                      allowManagedReadPathsOnly: true
+          # Let the Claude CLI use its existing subscription login.
+          apiKeyRequired: false
+          model: sonnet
+          max_turns: 30
+          # Only project-level instructions, so the developer's own
+          # ~/.claude guidance cannot leak into the subject.
+          setting_sources: ['project']
+          # Use Bash for reads so Promptfoo can represent both Claude's Bash
+          # calls and Codex's exec_command calls as command trajectory steps.
+          tools: ['Bash', 'Edit', 'Write']
+          custom_allowed_tools: ['Bash', 'Edit', 'Write']
+          disallowed_tools: ['Task', 'WebFetch', 'WebSearch']
 
-    - id: file://../../lib/agent-provider.mjs
+    - id: openai:codex-sdk
       label: codex
       config:
-          provider: openai:codex-sdk
-          fixture_module: fixture.mjs
-          provider_config:
-              sandbox_mode: workspace-write
-              approval_policy: never
-              network_access_enabled: false
-              web_search_mode: disabled
-              skip_git_repo_check: true
+          sandbox_mode: workspace-write
+          approval_policy: never
+          network_access_enabled: false
+          web_search_mode: disabled
+          # Streaming emits Promptfoo's normalized Codex trajectory spans;
+          # deep tracing connects the Codex CLI's own spans to the trace.
+          enable_streaming: true
+          deep_tracing: true
 
 tests: file://tests.yaml
+
+tracing:
+    enabled: true
+    failOnReceiverStartFailure: true
+    # Promptfoo recognizes Codex's exec_command by default. Claude calls its
+    # equivalent shell tool Bash, so declare that additional command tool name.
+    commandToolNames: ['Bash']
+    otlp:
+        http:
+            enabled: true
+            host: 127.0.0.1
+            port: 4318
+            acceptFormats: ['json']
 
 evaluateOptions:
     maxConcurrency: 2

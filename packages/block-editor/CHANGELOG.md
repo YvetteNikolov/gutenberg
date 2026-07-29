@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### New Features
+
+-   `URLInput`: Add an opt-in `closeSuggestionsOnNavigateOutside` prop that closes the suggestions list when focus moves outside the field, dismisses it on Escape without also closing an enclosing popover, and only opens the list while the field has focus ([#80879](https://github.com/WordPress/gutenberg/pull/80879)).
+
 ### Enhancements
 
 -   Inspector controls in the standard block-supports panels (Typography, Dimensions, Border, Color, Background, Filters) now reflect the value a block inherits from Global Styles when no local override is set. Inherited controls show that value at rest (as a placeholder, preselected option, or resolved value) and mark the label with a dotted underline; setting a local override reveals a reset affordance that clears the override back to the inherited value ([#77894](https://github.com/WordPress/gutenberg/pull/77894)).

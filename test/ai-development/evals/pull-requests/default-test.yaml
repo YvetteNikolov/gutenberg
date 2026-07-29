@@ -1,0 +1,39 @@
+# Grading contract shared by every agent config for this eval target.
+#
+# Both agents are graded by the identical deterministic grader and the identical
+# tool-free Claude judge, so their scores stay comparable. Keep this file the
+# only place these assertions are defined.
+#
+# `file://` paths resolve relative to this file's directory.
+options:
+    bustCache: true
+assert:
+    - type: javascript
+      value: file://grade-pr-description.cjs
+      threshold: 1
+      metric: Skill compliance checks
+    - type: llm-rubric
+      value: |
+          Judge whether this PR description would let a Gutenberg reviewer quickly
+          understand and test the change.
+
+          Context: the pull request changes the Notes (collab sidebar) feature so
+          that placing the caret inside an inline note marker in the editor content
+          selects/highlights the corresponding note in the Notes sidebar. It touches
+          packages/editor/src/components/collab-sidebar/format.js and extends
+          test/e2e/specs/editor/various/block-notes.spec.js to cover the behavior.
+
+          Pass only if the What/Why accurately describe the caret-to-sidebar
+          selection sync in plain language (not a vague file inventory), the testing
+          instructions are concrete editor steps ending in an observable result, and
+          the description stays succinct. Fail if it invents behavior that is not in
+          the change, buries the point in implementation detail, or pads testing
+          steps with environment setup.
+      threshold: 0.8
+      metric: Reviewer usefulness
+      provider:
+          id: file://../shared/agent-provider.mjs
+          config:
+              agent: claude
+              role: judge
+              model: sonnet

@@ -6,6 +6,14 @@ import { promisify } from 'node:util';
 
 const execFileAsync = promisify( execFile );
 
+/**
+ * The historical commit this eval recreates: "Notes: sync the sidebar selection
+ * to the caret marker". Single source of truth for the promptfoo configs and
+ * the fixture tests; override per provider with `fixture_commit` when adding a
+ * second case.
+ */
+export const TARGET_COMMIT = '1f27df2962c8f459582eeb41435251713f30c810';
+
 const EVAL_AUTHOR = {
 	GIT_AUTHOR_NAME: 'Gutenberg Agent Eval',
 	GIT_AUTHOR_EMAIL: 'gutenberg-agent-eval@example.com',
@@ -65,19 +73,19 @@ async function copyGuidance( sourceRoot, fixtureRoot, guidance ) {
  *
  * Eval definitions and golden fixtures are never copied into this repository.
  *
- * @param {Object}                options              Fixture options.
- * @param {string}                options.sourceRoot   Gutenberg checkout containing the source commit.
- * @param {string}                options.targetCommit Historical commit to recreate.
- * @param {'candidate'|'control'} [options.guidance]   Guidance variant to overlay.
+ * @param {Object}                options                Fixture options.
+ * @param {string}                options.sourceRoot     Gutenberg checkout containing the source commit.
+ * @param {string}                [options.targetCommit] Historical commit to recreate. Defaults to `TARGET_COMMIT`.
+ * @param {'candidate'|'control'} [options.guidance]     Guidance variant to overlay.
  * @return {Promise<Object>} Disposable fixture details and cleanup callback.
  */
 export async function createFixtureRepository( {
 	sourceRoot,
-	targetCommit,
+	targetCommit = TARGET_COMMIT,
 	guidance = 'candidate',
 } ) {
 	if ( ! targetCommit ) {
-		throw new Error( 'fixture_commit is required for subject providers' );
+		throw new Error( 'fixture_commit must be a commit-ish when provided' );
 	}
 	if ( ! [ 'candidate', 'control' ].includes( guidance ) ) {
 		throw new Error( `Unknown guidance variant: ${ guidance }` );

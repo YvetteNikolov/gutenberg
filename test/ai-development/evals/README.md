@@ -3,16 +3,17 @@
 Promptfoo evals that verify the agent skills in `skills/` are **discovered,
 followed, and effective** — starting with `skills/pull-requests/SKILL.md`.
 
-Unlike the transcript harness in `test/ai-development/run.mjs`, these evals run
-through [promptfoo](https://promptfoo.dev), so results land in a comparable
-table (`npm run view`) and output quality is graded, not just tool usage.
+These evals run through [promptfoo](https://promptfoo.dev), so results land in a
+comparable table (`npm run view`) and output quality is graded, not just tool
+usage.
 
 ## What the PR-skill eval checks
 
 The agent is asked to author a PR description for a pinned commit
-(`1f27df296` — Notes: sync the sidebar selection to the caret marker). The
-provider builds a disposable two-commit repository from that historical change,
-overlays the guidance variant under test, and captures the transcript.
+(`1f27df296` — Notes: sync the sidebar selection to the caret marker), defined
+once as `TARGET_COMMIT` in `pull-requests/fixture-repo.mjs`. The provider builds
+a disposable two-commit repository from that historical change, overlays the
+guidance variant under test, and captures the transcript.
 
 The fixture contains the Gutenberg source and guidance needed for the task, but
 does not contain this eval's configuration, graders, or golden answers.
@@ -65,8 +66,10 @@ evals/
 │   └── summarize-results.mjs
 └── pull-requests/
     ├── fixtures/
-    ├── fixture-repo.mjs
+    ├── default-test.yaml          # grading contract shared by both agents
+    ├── fixture-repo.mjs           # owns TARGET_COMMIT
     ├── grade-pr-description.cjs
+    ├── prompt.md                  # task prompt shared by both agents
     ├── promptfooconfig.claude.yaml
     ├── promptfooconfig.codex.yaml
     ├── test-fixture.mjs
@@ -77,6 +80,16 @@ The shared provider loads the fixture builder named by each config's
 `fixture_module`. The reporter discovers configured `outputPath` values and
 groups results by `evaluation`, so adding a target does not require changing
 shared code.
+
+Each agent config carries only what is agent-specific: its providers, its
+`description`, and its `outputPath`. The prompt, the assertions, the judge, and
+the commit under test are defined once and shared, so the two agents cannot
+drift into being graded differently.
+
+Within a config, `file://` paths resolve **relative to that config file's own
+directory** — hence `file://../shared/agent-provider.mjs` from `pull-requests/`.
+The `fixture_module` key is not a promptfoo path; it is resolved by
+`shared/agent-provider.mjs` relative to the `evals/` root.
 
 ## Running
 
@@ -131,7 +144,8 @@ standard setup working without requiring a second Node.js installation.
 2. Add a directory named for the skill, following the `pull-requests/` shape.
 3. Add a fixture builder, deterministic grader, canned samples, and tests
    inside that directory; make those tests pass before burning agent tokens.
-4. Add Claude and Codex configs that set a unique `evaluation`, reference the
-   target's `fixture_module`, and combine the grader with an `llm-rubric` for
-   judgment calls regexes cannot make.
+4. Add a shared `prompt.md` and `default-test.yaml` that combine the grader with
+   an `llm-rubric` for judgment calls regexes cannot make, then add thin Claude
+   and Codex configs that set a unique `evaluation`, reference the target's
+   `fixture_module`, and point `defaultTest` at that shared file.
 5. Add the target's deterministic and live commands to `package.json`.

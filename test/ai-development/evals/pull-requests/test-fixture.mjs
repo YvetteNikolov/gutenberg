@@ -4,14 +4,14 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { createFixtureRepository } from './fixture-repo.mjs';
+import { createFixtureRepository, TARGET_COMMIT } from './fixture-repo.mjs';
 
 const evalsDir = path.resolve(
 	path.dirname( fileURLToPath( import.meta.url ) ),
 	'..'
 );
 const sourceRoot = path.resolve( evalsDir, '../../..' );
-const targetCommit = '1f27df2962c8f459582eeb41435251713f30c810';
+const targetCommit = TARGET_COMMIT;
 
 const cases = [
 	{

@@ -1,67 +1,34 @@
 # Codex variant of the pull-requests skill eval. Candidate and control providers
 # run in separate disposable fixtures with and without the skill guidance.
+#
+# The prompt and grading contract are shared with the Claude config; the commit
+# under test is owned by pull-requests/fixture-repo.mjs.
+#
+# `file://` paths resolve relative to this file's directory.
 description: Verify the pull-requests skill is discovered, followed, and produces a review-ready PR description (Codex)
 
 prompts:
-    - label: Author a PR description
-      raw: |
-          The fixture repository contains a baseline commit followed by exactly one
-          pull request commit at HEAD. Author the pull request description for the
-          committed change at HEAD. Your final answer must be only the PR description
-          markdown, with no preamble or commentary.
+    - id: file://prompt.md
+      label: Author a PR description
 
 providers:
-    - id: file://shared/agent-provider.mjs
+    - id: file://../shared/agent-provider.mjs
       label: Codex with repo guidance
       config:
           agent: codex
           evaluation: pull-requests
           fixture_module: pull-requests/fixture-repo.mjs
-          fixture_commit: 1f27df2962c8f459582eeb41435251713f30c810
           guidance: candidate
 
-    - id: file://shared/agent-provider.mjs
+    - id: file://../shared/agent-provider.mjs
       label: Codex control guidance
       config:
           agent: codex
           evaluation: pull-requests
           fixture_module: pull-requests/fixture-repo.mjs
-          fixture_commit: 1f27df2962c8f459582eeb41435251713f30c810
           guidance: control
 
-defaultTest:
-    options:
-        bustCache: true
-    assert:
-        - type: javascript
-          value: file://pull-requests/grade-pr-description.cjs
-          threshold: 1
-          metric: Skill compliance checks
-        - type: llm-rubric
-          value: |
-              Judge whether this PR description would let a Gutenberg reviewer quickly
-              understand and test the change.
-
-              Context: the pull request changes the Notes (collab sidebar) feature so
-              that placing the caret inside an inline note marker in the editor content
-              selects/highlights the corresponding note in the Notes sidebar. It touches
-              packages/editor/src/components/collab-sidebar/format.js and extends
-              test/e2e/specs/editor/various/block-notes.spec.js to cover the behavior.
-
-              Pass only if the What/Why accurately describe the caret-to-sidebar
-              selection sync in plain language (not a vague file inventory), the testing
-              instructions are concrete editor steps ending in an observable result, and
-              the description stays succinct. Fail if it invents behavior that is not in
-              the change, buries the point in implementation detail, or pads testing
-              steps with environment setup.
-          threshold: 0.8
-          metric: Reviewer usefulness
-          provider:
-              id: file://shared/agent-provider.mjs
-              config:
-                  agent: claude
-                  role: judge
-                  model: sonnet
+defaultTest: file://default-test.yaml
 
 tests:
     - description: PR description for the Notes caret-to-sidebar selection sync commit

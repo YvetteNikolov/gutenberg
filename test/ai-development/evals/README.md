@@ -1,71 +1,186 @@
-# Agent skill evals
+# Agent evaluations
 
-[promptfoo](https://promptfoo.dev) evals that measure whether the agent skills
-in `skills/` are actually discovered and followed by a coding agent.
+This package uses [Promptfoo](https://www.promptfoo.dev/docs/) to evaluate
+whether coding agents discover and follow Gutenberg's repository instructions.
+It is deliberately separate from the root npm workspace and has its own
+dependencies and lockfile.
 
-## What this eval measures
+Read the parent [AI development tests README](../README.md) first for when an
+agent evaluation is appropriate.
 
-`skills/testing/SKILL.md` is a router: it defers to `references/jest.md`,
-`references/php.md` or `references/e2e.md` depending on the kind of test being
-written. The eval asks an agent to add an end-to-end test, then checks it read
-the e2e reference and left the other two alone.
+## What the current suite proves
 
-Each agent runs against a throwaway repository built from a pinned commit, so a
-run cannot touch your checkout and cannot see this eval's own configuration.
+`skills/testing/SKILL.md` routes an agent to one of three references: Jest,
+PHPUnit, or end-to-end testing. The `testing-skill-routing` suite asks an agent
+to add an end-to-end test and checks its normalized tool trace for two things:
 
-## Running
+-   The agent read `skills/testing/references/e2e.md`.
+-   The agent did not read the Jest or PHPUnit references.
+
+This is a routing evaluation. A passing row does **not** prove that the agent
+wrote the requested test, that the test passes, or that the resulting code is
+correct. The current provider returns the final response and tool metadata, then
+deletes the fixture; it does not preserve the fixture's final diff for
+assertions.
+
+## Mental model
+
+Promptfoo evaluates the matrix of prompts, providers, test cases, and repeats
+declared by a suite. The current suite has one prompt, two providers, one test
+case, and two configured repeats, so an unfiltered run starts four real coding
+agent sessions.
+
+For each session, the local wrapper:
+
+1. Rebuilds a pinned Gutenberg change as a temporary Git repository.
+2. Applies any suite-specific fixture overlay.
+3. Starts Promptfoo's Claude Agent SDK or Codex SDK provider in that repository.
+4. Captures the final response and normalized tool-call metadata.
+5. Deletes the temporary repository, including the agent's edits.
+
+The subject agent cannot see this evaluation's prompt configuration, assertions,
+or expected results. It also never works in your Gutenberg checkout.
+
+For the underlying concepts, see Promptfoo's guides to
+[coding-agent evaluations](https://www.promptfoo.dev/docs/guides/evaluate-coding-agents/),
+[configuration](https://www.promptfoo.dev/docs/configuration/guide/), and
+[assertions](https://www.promptfoo.dev/docs/configuration/expected-outputs/).
+
+## Prerequisites
+
+-   Use Node.js 22.22 or newer (Node.js 24 LTS is recommended) and the npm
+    version declared in the root `package.json`. Promptfoo's runtime requirement
+    is stricter than Gutenberg's current minimum Node.js version.
+-   Install the eval package separately:
+
+    ```bash
+    npm --prefix test/ai-development/evals install
+    ```
+
+    A root `npm install` does not install this nested package.
+
+-   The pinned fixture commit must exist in the local Gutenberg clone. Fixture
+    construction uses only the local Git repository and does not fetch commits.
+-   Authenticate the provider you intend to run:
+    -   Codex can reuse an existing Codex/ChatGPT login when no API key is set,
+        or use `OPENAI_API_KEY`/`CODEX_API_KEY`.
+    -   Claude can reuse an existing Claude Code login because the suite sets
+        `apiKeyRequired: false`, or use `ANTHROPIC_API_KEY`.
+
+See Promptfoo's provider documentation for
+[Codex SDK setup](https://www.promptfoo.dev/docs/providers/openai-codex-sdk/#setup)
+and
+[Claude Agent SDK setup](https://www.promptfoo.dev/docs/providers/claude-agent-sdk/#setup).
+Model calls consume the quota or paid usage associated with those credentials.
+
+## Run the evaluations
+
+Run commands from the repository root:
 
 ```bash
-npm --prefix test/ai-development/evals install
-
-# Check every suite's config without running agents.
+# Validate every suite without starting an agent or spending model tokens.
 npm --prefix test/ai-development/evals run validate
 
-# Live run (minutes + real tokens). No argument runs every suite.
+# Run every suite and every configured provider.
 npm run test:agent-evals
 
-# A path runs one suite; flags pass through either way.
+# Run one suite.
 npm run test:agent-evals -- suites/testing-skill-routing/promptfooconfig.yaml
-npm run test:agent-evals -- --filter-providers claude
+
+# Run one provider across the selected suite(s).
+npm run test:agent-evals -- suites/testing-skill-routing/promptfooconfig.yaml --filter-providers codex
+npm run test:agent-evals -- suites/testing-skill-routing/promptfooconfig.yaml --filter-providers claude
+
+# Override the configured repeat count while investigating stability.
 npm run test:agent-evals -- suites/testing-skill-routing/promptfooconfig.yaml --repeat 3
 
-# Results table, transcripts, per-run detail.
+# Browse stored results, transcripts, and assertion details locally.
 npm --prefix test/ai-development/evals run view
 ```
 
-npm needs the `--` before any argument. Everything after it goes to
-`lib/run.sh`, which follows the jest convention: optional leading path, then
-flags.
+npm requires the `--` before forwarded arguments. Everything after it goes to
+`lib/run.sh`, which accepts an optional leading config path followed by
+Promptfoo CLI flags. With no path, the runner globs every
+`suites/*/promptfooconfig.yaml`.
 
-Runs report assertion failures but do not fail the process on a red row;
-provider and runtime errors still do. Output goes to `results/` (gitignored) and
-to promptfoo's own store, browsable with `promptfoo view`.
+The runner disables Promptfoo telemetry and response caching. Assertion failures
+produce red rows but intentionally do not make the process exit nonzero;
+provider and runtime errors still do. Treat the results table, not the shell
+status alone, as the evaluation outcome.
 
-## Layout
+Raw JSON is written under `results/raw/`, and Promptfoo also records the run in
+its local store for the [web viewer](https://www.promptfoo.dev/docs/usage/web-ui/).
+`results/` is gitignored. Transcripts may contain source code and tool output;
+inspect them before sharing or moving them outside your machine.
+
+## Repository layout
 
 ```text
-lib/                            harness — rarely touched
-├── agent-provider.mjs          builds the fixture, hands it to a promptfoo provider, cleans up
-├── build-fixture.mjs           rebuilds any commit as a disposable repository
-└── run.sh                      resolves which suites to run
+lib/
+├── agent-provider.mjs          Fixture lifecycle and delegation to Promptfoo
+├── build-fixture.mjs           Generic pinned-commit repository builder
+└── run.sh                      Suite selection and shared CLI behavior
 suites/
-└── testing-skill-routing/      one directory per eval
-    ├── promptfooconfig.yaml    providers, sandboxing, concurrency, output
-    ├── prompt.md               the task given to the agent
-    ├── tests.yaml              cases and assertions — what is measured
-    └── fixture.mjs             the commit under test, plus any overlay
+└── testing-skill-routing/
+    ├── promptfooconfig.yaml    Provider matrix, permissions, repeats, output
+    ├── prompt.md               Task shown to the subject agent
+    ├── tests.yaml              Cases, assertions, and named metrics
+    └── fixture.mjs             Pinned commit and suite-specific setup
 ```
 
-A suite is self-contained: it names its fixture by bare filename, because
-`fixture_module` resolves relative to the config that declares it.
+Each suite is self-contained. `file://` paths and `fixture_module` resolve
+relative to the suite config, so a suite can refer to `prompt.md`,
+`tests.yaml`, and `fixture.mjs` by bare filename.
 
-## Adding a test case
+The two library modules have different responsibilities:
 
-Add an entry to `tests.yaml`. Assertions describe what the agent should have
-done, not what it should have said.
+-   `build-fixture.mjs` archives the parent of a target commit, applies an
+    optional overlay to that baseline, commits it, and reapplies the target
+    change. It knows nothing about Promptfoo or a particular evaluation.
+-   `agent-provider.mjs` creates one fixture per run, injects its path as the
+    provider's `working_dir`, delegates to Promptfoo's built-in agent provider,
+    adds the fixture commit to response metadata, and always cleans up.
 
-Process assertions read `metadata.toolCalls`, which promptfoo normalises across
-agents. Reach it with an assertion `transform`:
+## Add or change a suite
+
+Before editing, state the narrow claim the evaluation should support. Decide
+whether it concerns the final response, the agent's trajectory, or its resulting
+files. The current harness exposes the first two. To assert on resulting files,
+extend the provider to capture the needed artifact or diff before cleanup.
+
+For a new suite:
+
+1. Copy `suites/testing-skill-routing/` to a descriptively named directory.
+2. Write a realistic task in `prompt.md`. Do not reveal the expected route or
+   assertion in the prompt.
+3. Pin `fixture.mjs` to a commit containing the scenario under test. Use an
+   `overlay` only for evaluation setup that does not belong in that commit.
+4. Configure providers, permissions, repeats, concurrency, and output in
+   `promptfooconfig.yaml`.
+5. Put the measurable claim and named metrics in `tests.yaml`.
+6. Validate the config, then run one provider and one repeat while iterating.
+7. Run the intended provider matrix with multiple repeats before drawing a
+   conclusion.
+
+No registration is needed: the runner and validator discover
+`suites/*/promptfooconfig.yaml`. Start every config with the schema comment for
+editor validation:
+
+```yaml
+# yaml-language-server: $schema=https://promptfoo.dev/config-schema.json
+```
+
+If a suite needs multiple test files, Promptfoo accepts a glob such as:
+
+```yaml
+tests: file://tests/*
+```
+
+## Write assertions against agent behavior
+
+Promptfoo providers place normalized agent tool calls in
+`context.metadata.toolCalls`. An assertion-level `transform` can select that
+metadata before applying a deterministic matcher:
 
 ```yaml
 - type: contains
@@ -74,42 +189,54 @@ agents. Reach it with an assertion `transform`:
   metric: Read the e2e reference
 ```
 
-Note that `skill-used` will not work here. It reads `metadata.skillCalls`, which
-only populates for skills the agent SDK registers from `.claude/skills` — a
-repository's `skills/` directory is found by searching, so that stays empty.
+Use named `metric` values so repeated results aggregate intelligibly in the
+viewer. Prefer deterministic assertions over grading another model when the
+trace or output contains direct evidence.
 
-If a case needs the agent to write files, add the tools to
-`append_allowed_tools`. Setting `working_dir` narrows the default allowlist to
-`Read`/`Grep`/`Glob`/`LS`, and an agent that cannot write will stop and ask for
-permission that nothing can grant.
+`skill-used` is not appropriate for the current Gutenberg routing suite.
+Promptfoo populates `metadata.skillCalls` for skills registered through the
+agent SDK's recognized skill locations. Gutenberg's root `skills/` directory is
+instead discovered through repository instructions, so the relevant evidence
+is the file read in `metadata.toolCalls`.
 
-## Adding a suite
+Tool permissions are part of the test setup. Claude's configured `working_dir`
+starts with read-only tools, so a task that edits files needs `Edit` and `Write`
+in `append_allowed_tools`. Keep provider filesystem access confined to the
+fixture and keep agent shell network access disabled.
 
-Copy `suites/testing-skill-routing/`, rename it, and edit its four files.
-Nothing in `lib/` or `package.json` needs to change — `run.sh` and `validate`
-both glob `suites/*/promptfooconfig.yaml`.
+## Debug failures and flaky results
 
-Start each config with the schema comment for editor autocomplete:
+Open the viewer first. A cell shows the final response, tool trace, token usage,
+and the reason each assertion passed or failed.
+
+To capture Claude Agent SDK startup details such as settings sources, skills,
+and tools, temporarily add these keys under that provider's `provider_config`:
 
 ```yaml
-# yaml-language-server: $schema=https://promptfoo.dev/config-schema.json
+debug: true
+debug_file: results/agent.log
 ```
 
-Once a suite outgrows a single `tests.yaml`, promptfoo will glob a directory
-instead: `tests: file://tests/*`.
+That file is produced by the agent SDK; Promptfoo does not include it in the
+normal result cell.
 
-## Debugging a run
+Check these common causes:
 
-`promptfoo view` shows each cell's full output and which assertion failed.
-
-To see what an agent loaded at startup — settings sources, skills, tools — set
-`debug: true` and `debug_file: results/agent.log` in `provider_config`. That is
-the agent SDK's own log; promptfoo does not surface any of it.
-
-Two things that have caused confusing failures:
-
--   The agent SDKs must stay direct devDependencies. promptfoo declares them
-    optional and resolves them from this directory, so a copy nested under
-    `promptfoo/node_modules` is not found.
--   Agents read `~/.claude/skills` regardless of `setting_sources`, so a personal
-    skill on the machine can reach a run.
+-   **Authentication error:** verify the selected provider works with the same
+    local login or API key outside the evaluation.
+-   **Fixture error:** verify the pinned commit exists locally and still applies
+    with any overlay.
+-   **Permission or sandbox error:** compare the requested task with the
+    configured write tools, sandbox support, and network restrictions.
+-   **A surprising route:** inspect `metadata.toolCalls`; the final response
+    alone does not show which guidance the agent read.
+-   **Intermittent failure:** run a single provider with several repeats before
+    changing the prompt or assertion.
+-   **Machine-specific behavior:** Claude and Codex can still discover
+    user-level configuration or skills from their normal home directories.
+    Project-only Claude setting sources reduce this but do not fully isolate
+    user-level skill files. Reproducible CI will require dedicated agent home
+    directories and credentials.
+-   **Provider load failure:** keep `@anthropic-ai/claude-agent-sdk` and
+    `@openai/codex-sdk` as direct dev dependencies. Promptfoo declares them
+    optional and resolves them from this package.

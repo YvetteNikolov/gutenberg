@@ -140,11 +140,13 @@ fail the command.
 
 ### Node version
 
-Requires Node `^20.20.0 || >=22.22.0` — what promptfoo 0.121 needs for
-`skill-used` and the `trajectory:*` assertions. That is compatible with
-Gutenberg's `engines.node` (`>=20.19.0`) and an unpinned `.nvmrc` of `20`; only
-a checkout sitting exactly on 20.19.x needs to move. `better-sqlite3` is
-compiled per Node major, so switching majors requires reinstalling this package.
+This package declares no `engines` of its own — promptfoo's own requirement
+governs, and npm will tell you if your Node is too old. At the time of writing
+that is `^20.20.0 || >=22.22.0`, and promptfoo drops Node 20 on 30 July 2026, so
+in practice use Node 22 or newer here even though the repo's `.nvmrc` says `20`.
+
+promptfoo pulls in `better-sqlite3`, which is compiled per Node major. If you
+switch Node majors, `rm -rf node_modules && npm install` in this directory.
 
 ## Filling in an eval
 

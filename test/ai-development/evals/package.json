@@ -22,9 +22,6 @@
 		"report": "node shared/summarize-results.mjs results/raw/pull-requests-claude.json results/raw/pull-requests-codex.json",
 		"view": "promptfoo view"
 	},
-	"engines": {
-		"node": "^20.20.0 || >=22.22.0"
-	},
 	"devDependencies": {
 		"promptfoo": "^0.121.19"
 	}

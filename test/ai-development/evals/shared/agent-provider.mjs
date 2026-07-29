@@ -48,6 +48,37 @@ async function loadFixtureModule( fixtureModule ) {
 	return loaded;
 }
 
+/**
+ * Confines the Claude sandbox to the fixture.
+ *
+ * `sandbox` is the one config key promptfoo forwards to the Claude Agent SDK
+ * verbatim, and its filesystem allowlists need an absolute path that only
+ * exists at run time. The config declares the policy; this fills in the path.
+ * Providers with no `sandbox` block (Codex uses `sandbox_mode`) pass through
+ * untouched.
+ *
+ * @param {Object} providerConfig Config destined for the native provider.
+ * @param {string} cwd            Fixture working directory.
+ * @return {Object} Config with fixture-scoped filesystem allowlists.
+ */
+function withFixturePaths( providerConfig, cwd ) {
+	if ( ! providerConfig.sandbox ) {
+		return providerConfig;
+	}
+
+	return {
+		...providerConfig,
+		sandbox: {
+			...providerConfig.sandbox,
+			filesystem: {
+				...( providerConfig.sandbox.filesystem || {} ),
+				allowRead: [ cwd ],
+				allowWrite: [ cwd ],
+			},
+		},
+	};
+}
+
 export default class GutenbergAgentProvider {
 	/**
 	 * @param {Object}   [options]                 Provider options from promptfoo.
@@ -104,7 +135,10 @@ export default class GutenbergAgentProvider {
 			const agent = await load( this.config.provider, {
 				options: {
 					config: {
-						...( this.config.provider_config || {} ),
+						...withFixturePaths(
+							this.config.provider_config || {},
+							fixture.cwd
+						),
 						working_dir: fixture.cwd,
 					},
 				},

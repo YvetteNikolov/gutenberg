@@ -42,6 +42,20 @@ providers:
                       'WebFetch',
                       'WebSearch',
                   ]
+              # Forwarded to the Claude Agent SDK verbatim, so these keys are
+              # the SDK's camelCase `SandboxSettings`, unlike the snake_case
+              # keys above. The wrapper fills in filesystem allowRead/allowWrite
+              # with the fixture path at run time.
+              sandbox:
+                  enabled: true
+                  failIfUnavailable: true
+                  autoAllowBashIfSandboxed: true
+                  allowUnsandboxedCommands: false
+                  network:
+                      allowedDomains: []
+                      allowManagedDomainsOnly: true
+                  filesystem:
+                      allowManagedReadPathsOnly: true
               # TODO: confirm the `sandbox` sub-schema against the installed
               # 0.121.x provider before the first live run — network must be
               # disabled and writes confined to working_dir.
@@ -67,6 +81,20 @@ providers:
                       'WebFetch',
                       'WebSearch',
                   ]
+              # Forwarded to the Claude Agent SDK verbatim, so these keys are
+              # the SDK's camelCase `SandboxSettings`, unlike the snake_case
+              # keys above. The wrapper fills in filesystem allowRead/allowWrite
+              # with the fixture path at run time.
+              sandbox:
+                  enabled: true
+                  failIfUnavailable: true
+                  autoAllowBashIfSandboxed: true
+                  allowUnsandboxedCommands: false
+                  network:
+                      allowedDomains: []
+                      allowManagedDomainsOnly: true
+                  filesystem:
+                      allowManagedReadPathsOnly: true
           evaluation: pull-requests
           fixture_module: pull-requests/fixture-repo.mjs
           guidance: control

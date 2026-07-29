@@ -9,7 +9,7 @@ import clsx from 'clsx';
 import { speak } from '@wordpress/a11y';
 import { __, sprintf, _n } from '@wordpress/i18n';
 import { useEffect, useRef, useState } from '@wordpress/element';
-import { UP, DOWN, ENTER, TAB } from '@wordpress/keycodes';
+import { UP, DOWN, ENTER, TAB, ESCAPE } from '@wordpress/keycodes';
 import {
 	BaseControl,
 	Button,
@@ -18,7 +18,12 @@ import {
 	Popover,
 	privateApis as componentsPrivateApis,
 } from '@wordpress/components';
-import { useDebounce, useEvent, useInstanceId } from '@wordpress/compose';
+import {
+	__experimentalUseFocusOutside as useFocusOutside,
+	useDebounce,
+	useEvent,
+	useInstanceId,
+} from '@wordpress/compose';
 import { useSelect } from '@wordpress/data';
 import { isURL } from '@wordpress/url';
 
@@ -59,6 +64,7 @@ export default function URLInput( props ) {
 		__experimentalShowInitialSuggestions: showInitialSuggestions = false,
 		autocompleteRef,
 		className,
+		closeSuggestionsOnNavigateOutside = false,
 		customValidity,
 		disableSuggestions,
 		disabled = false,
@@ -162,6 +168,20 @@ export default function URLInput( props ) {
 				setSuggestions( nextSuggestions );
 				setSuggestionsValue( search );
 				setIsLoading( false );
+
+				// When the list may only show while the user is engaged with
+				// the field, don't open it (or announce results) if focus is
+				// known to be elsewhere by the time the results arrive.
+				const inputNode = controlInputRef.current;
+				if (
+					closeSuggestionsOnNavigateOutside &&
+					!! inputNode &&
+					inputNode.ownerDocument.activeElement !== inputNode
+				) {
+					setIsSuggestionsListOpen( false );
+					return;
+				}
+
 				setIsSuggestionsListOpen( !! nextSuggestions.length );
 
 				if ( nextSuggestions.length ) {
@@ -244,6 +264,20 @@ export default function URLInput( props ) {
 		setIsSuggestionsListOpen( false );
 	}
 
+	function closeSuggestionsList() {
+		// Cancel any pending request, so that its response can't reopen the
+		// list after it was dismissed.
+		suggestionsRequestRef.current?.cancel?.();
+		suggestionsRequestRef.current = null;
+		setIsLoading( false );
+		setIsSuggestionsListOpen( false );
+		setSelectedSuggestion( null );
+	}
+
+	function handleFocusOutside() {
+		closeSuggestionsList();
+	}
+
 	function handleSuggestionClick( suggestion ) {
 		selectLink( suggestion );
 		// Move focus to the input field when a link suggestion is clicked.
@@ -256,7 +290,10 @@ export default function URLInput( props ) {
 		onChange( newValue );
 	}
 
-	function handleFocus() {
+	function handleFocus( event ) {
+		// Focus (re)entering the field cancels a pending focus-outside check.
+		focusOutsideProps.onFocus( event );
+
 		// When opening the link editor, if there's a value present, we want to load the suggestions pane with the results for this input search value
 		// Don't re-run the suggestions on focus if there are already suggestions present (prevents searching again when tabbing between the input and buttons)
 		// or there is already a request in progress.
@@ -272,6 +309,21 @@ export default function URLInput( props ) {
 
 	function handleKeyDown( event ) {
 		onKeyDown?.( event );
+
+		// When closing on navigate-outside is enabled, Escape dismisses a
+		// visible suggestions list. The event mustn't propagate any further,
+		// so that a popover the component is rendered within stays open.
+		if (
+			closeSuggestionsOnNavigateOutside &&
+			event.keyCode === ESCAPE &&
+			showSuggestions &&
+			suggestions.length > 0
+		) {
+			event.preventDefault();
+			event.stopPropagation();
+			closeSuggestionsList();
+			return;
+		}
 
 		// If the suggestions are not shown or loading, we shouldn't handle the arrow keys
 		// We shouldn't preventDefault to allow block arrow keys navigation.
@@ -368,6 +420,15 @@ export default function URLInput( props ) {
 		}
 	}
 
+	// The handlers detect focus moving outside of the component. They are
+	// bound to both the input and the suggestions list, which share the
+	// hook's state, so that focus moving between the two is not treated as
+	// navigating outside.
+	const focusOutsideProps = useFocusOutside( handleFocusOutside );
+	const navigateOutsideProps = closeSuggestionsOnNavigateOutside
+		? focusOutsideProps
+		: undefined;
+
 	const controlProps = {
 		id: inputId, // Passes attribute to label for the for attribute
 		label,
@@ -378,6 +439,9 @@ export default function URLInput( props ) {
 	};
 
 	const inputProps = {
+		// Spread first: the `onFocus` key below overrides the hook's handler,
+		// which `handleFocus` chains instead.
+		...navigateOutsideProps,
 		id: inputId,
 		value,
 		required,
@@ -419,6 +483,7 @@ export default function URLInput( props ) {
 					className={ className }
 					handleSuggestionClick={ handleSuggestionClick }
 					isLoading={ isLoading }
+					navigateOutsideProps={ navigateOutsideProps }
 					renderSuggestions={ renderSuggestions }
 					selectedSuggestion={ selectedSuggestion }
 					suggestionNodesRef={ suggestionNodesRef }
@@ -482,6 +547,7 @@ function Suggestions( {
 	className,
 	handleSuggestionClick,
 	isLoading,
+	navigateOutsideProps,
 	renderSuggestions,
 	selectedSuggestion,
 	suggestionNodesRef,
@@ -491,6 +557,7 @@ function Suggestions( {
 	suggestionsValue,
 } ) {
 	const suggestionsListProps = {
+		...navigateOutsideProps,
 		id: suggestionsListboxId,
 		ref: autocompleteRef,
 		role: 'listbox',

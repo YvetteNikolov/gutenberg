@@ -1,17 +1,14 @@
 /**
  * Fixture for the testing-skill routing eval.
  *
- * Unlike the pull-requests target, this one overlays nothing: the pinned commit
- * already carries `AGENTS.md`'s routing line, `CLAUDE.md`, and
- * `skills/testing/` with all three reference files, which is everything the
- * agent needs to find its way to the right one.
+ * This target overlays nothing: the pinned commit already carries `AGENTS.md`'s
+ * routing line, `CLAUDE.md`, and `skills/testing/` with all three reference
+ * files, which is everything the agent needs to find its way to the right one.
+ * A target that varies guidance would pass an `overlay` callback instead.
  */
-import { buildFixtureRepository } from '../shared/fixture-repo.mjs';
+import { buildFixtureRepository } from './build-fixture.mjs';
 
-/**
- * Any commit whose tree contains `skills/testing/` works; this one is shared
- * with the pull-requests eval so both fixtures build from the same history.
- */
+/** Any commit whose tree contains `skills/testing/` works. */
 export const TARGET_COMMIT = '1f27df2962c8f459582eeb41435251713f30c810';
 
 /**

@@ -1,0 +1,72 @@
+# How to run the agents for this target. What is actually being measured lives
+# in tests.yaml, and the task itself in prompt.md.
+#
+# Both agents live in this one config; promptfoo runs the matrix. Use
+# `--filter-providers claude` (or `codex`) to run just one.
+#
+# `file://` paths resolve relative to this file's directory.
+description: Verify an e2e task routes through the testing skill to the e2e reference only
+
+prompts:
+    - id: file://prompt.md
+      label: Add an e2e test
+
+providers:
+    # The wrapper owns only the disposable fixture; `provider` names the
+    # built-in promptfoo provider that runs the agent and normalises its
+    # trajectory into metadata.toolCalls.
+    - id: file://agent-provider.mjs
+      label: claude
+      config:
+          provider: anthropic:claude-code
+          fixture_module: fixture-repo.mjs
+          provider_config:
+              # promptfoo refuses to start without ANTHROPIC_API_KEY unless told
+              # otherwise. Opt out so the Claude CLI authenticates the way it
+              # normally does — a subscription login in the OS keychain — rather
+              # than requiring a separate API key just to run evals.
+              apiKeyRequired: false
+              model: sonnet
+              max_turns: 30
+              # Only project-level instructions, so the developer's own
+              # ~/.claude guidance cannot leak into the subject.
+              setting_sources: ['project']
+              # With `working_dir` set, promptfoo defaults the allowlist to
+              # Read/Grep/Glob/LS, so writes are denied and the task cannot be
+              # completed. Bash is auto-approved separately by the sandbox's
+              # autoAllowBashIfSandboxed below.
+              append_allowed_tools: ['Edit', 'Write']
+              disallowed_tools: ['Task', 'WebFetch', 'WebSearch']
+              # Forwarded to the Claude Agent SDK verbatim, so these keys are
+              # the SDK's camelCase `SandboxSettings`. The wrapper fills in
+              # filesystem allowRead/allowWrite with the fixture path.
+              sandbox:
+                  enabled: true
+                  failIfUnavailable: true
+                  autoAllowBashIfSandboxed: true
+                  allowUnsandboxedCommands: false
+                  network:
+                      allowedDomains: []
+                      allowManagedDomainsOnly: true
+                  filesystem:
+                      allowManagedReadPathsOnly: true
+
+    - id: file://agent-provider.mjs
+      label: codex
+      config:
+          provider: openai:codex-sdk
+          fixture_module: fixture-repo.mjs
+          provider_config:
+              sandbox_mode: workspace-write
+              approval_policy: never
+              network_access_enabled: false
+              web_search_mode: disabled
+              skip_git_repo_check: true
+
+tests: file://tests.yaml
+
+evaluateOptions:
+    maxConcurrency: 2
+    repeat: 2
+
+outputPath: results/raw/testing.json

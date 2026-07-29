@@ -16,11 +16,15 @@
 		"url": "https://github.com/WordPress/gutenberg/issues"
 	},
 	"scripts": {
-		"validate": "promptfoo validate config --config */promptfooconfig.yaml",
-		"eval": "PROMPTFOO_DISABLE_TELEMETRY=1 PROMPTFOO_FAILED_TEST_EXIT_CODE=0 promptfoo eval --no-cache --config",
+		"validate": "promptfoo validate config",
+		"eval": "PROMPTFOO_DISABLE_TELEMETRY=1 PROMPTFOO_FAILED_TEST_EXIT_CODE=0 promptfoo eval --no-cache",
+		"eval:claude": "npm run eval -- --filter-providers claude",
+		"eval:codex": "npm run eval -- --filter-providers codex",
 		"view": "promptfoo view"
 	},
 	"devDependencies": {
+		"@anthropic-ai/claude-agent-sdk": "^0.3.201",
+		"@openai/codex-sdk": "^0.144.6",
 		"promptfoo": "^0.121.19"
 	}
 }

@@ -25,10 +25,7 @@
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
-const evalsDir = path.resolve(
-	path.dirname( fileURLToPath( import.meta.url ) ),
-	'..'
-);
+const evalsDir = path.dirname( fileURLToPath( import.meta.url ) );
 const sourceRoot = path.resolve( evalsDir, '../../..' );
 
 async function loadFixtureModule( fixtureModule ) {

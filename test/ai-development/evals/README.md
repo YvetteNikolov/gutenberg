@@ -1,135 +1,100 @@
 # Agent skill evals
 
-A [promptfoo](https://promptfoo.dev) harness for measuring whether the agent
-skills in `skills/` are discovered and followed.
+[promptfoo](https://promptfoo.dev) evals that measure whether the agent skills
+in `skills/` are actually discovered and followed by a coding agent.
 
-## The one architectural rule
-
-**The fixture is ours. Everything else is promptfoo's.**
-
-Rebuilding a Gutenberg commit into a throwaway repository is something promptfoo
-cannot know about, so we own it. Running an agent, capturing its tool calls, and
-normalising those calls across vendors are solved problems, so we do not.
-
-promptfoo's built-in agent providers populate `metadata.toolCalls` and
-`metadata.skillCalls`, and its assertions read them. Nothing here parses a raw
-shell string or defines its own transcript shape.
-
-```text
-testing/promptfooconfig.yaml
-        │
-        ├─ providers ──► shared/agent-provider.mjs      (ours, ~130 lines)
-        │                   │
-        │                   ├─ build fixture ──────────► testing/fixture-repo.mjs
-        │                   │                               └─► shared/fixture-repo.mjs
-        │                   ├─ delegate ───────────────► anthropic:claude-code
-        │                   │                             openai:codex-sdk   (promptfoo)
-        │                   └─ clean up
-        │
-        └─ tests ──────► built-in assertions only
-```
-
-The package depends on `promptfoo` and nothing else — no agent SDKs, because we
-no longer invoke them.
-
-## Why the wrapper provider exists
-
-It is the only custom runtime code, and it exists for one reason: the fixture
-must be built per run, and promptfoo offers no seam for that.
-
--   `extensions` `beforeEach` hooks receive only `{ test }` — no provider — so a
-    hook cannot vary the fixture per provider.
--   Provider config is not rendered with test vars, and providers are
-    instantiated once per suite, so a per-run `working_dir` cannot be passed
-    through config.
-
-So the wrapper builds the fixture, sets `working_dir`, confines the sandbox to
-it, hands off to the native provider, and deletes the fixture in a `finally`. It
-does not touch the agent's output or metadata beyond recording which fixture
-commit the run saw.
-
-If promptfoo later exposes the provider in extension hooks, or renders provider
-config per test, this file can be deleted.
-
-## Layers
-
-| Path                            | Owns                                                                                                |
-| ------------------------------- | --------------------------------------------------------------------------------------------------- |
-| `shared/agent-provider.mjs`     | Fixture lifecycle and delegation. Agent-agnostic — `provider:` names the native promptfoo provider. |
-| `shared/fixture-repo.mjs`       | Rebuilding a commit as a disposable repo. Knows nothing about any eval.                             |
-| `<target>/fixture-repo.mjs`     | The commit under test, and any per-target overlay.                                                  |
-| `<target>/promptfooconfig.yaml` | Everything else: prompt, providers, assertions.                                                     |
-
-One config per target holds every agent, so the prompt and assertions cannot
-drift between them. Adding an agent is a provider block; adding a target is a
-directory with two files.
-
-## The testing eval
+## What this eval measures
 
 `skills/testing/SKILL.md` is a router: it defers to `references/jest.md`,
-`references/php.md` or `references/e2e.md` depending on the kind of test. The
-eval asks for an end-to-end test and checks the agent takes the e2e branch and
-leaves the other two unread — a progressive-disclosure check.
+`references/php.md` or `references/e2e.md` depending on the kind of test being
+written. The eval asks an agent to add an end-to-end test, then checks it read
+the e2e reference and left the other two alone.
 
-`skill-used` cannot express this, because the skill is `testing` either way and
-the distinction is which reference was opened. So each assertion uses
-`transform` to reach `metadata.toolCalls` and matches a path with a built-in
-`contains` / `not-contains`. No custom assertion files.
-
-## Isolation
-
-Subject agents run in a disposable repository with network and web search
-disabled, and may write only inside that fixture, which is deleted afterwards.
-The developer's checkout is never the working directory. The fixture is built by
-`git archive`, so it contains only tracked files — this eval's own config is
-never visible to the agent.
-
-Isolation is configured on the native providers (`sandbox`, `sandbox_mode`,
-`network_access_enabled`, `setting_sources`) rather than enforced by our code.
-The Claude `sandbox` block is forwarded to the Claude Agent SDK verbatim, so it
-uses the SDK's camelCase keys while everything else in `provider_config` is
-snake_case; the wrapper fills in its filesystem allowlists with the fixture path.
-
-## Conventions worth knowing
-
--   `file://` paths in a config resolve **relative to that config file's own
-    directory** — hence `file://../shared/agent-provider.mjs`.
--   `fixture_module` is not a promptfoo path; the wrapper resolves it relative to
-    the `evals/` root.
--   promptfoo's YAML parser does **not** resolve `<<:` merge keys. An anchored
-    provider block yields a silently undefined provider, so blocks are spelled
-    out.
+Each agent runs against a throwaway repository built from a pinned commit, so a
+run cannot touch your checkout and cannot see this eval's own configuration.
 
 ## Running
 
 ```bash
 npm --prefix test/ai-development/evals install
 
-# Validate every target's wiring without running agents.
+# Check the config without running agents.
 npm --prefix test/ai-development/evals run validate
 
-# Live run (minutes + real tokens). Add --filter-providers to pick one agent.
-npm run test:agent-evals testing/promptfooconfig.yaml
-npm run test:agent-evals testing/promptfooconfig.yaml -- --filter-providers claude
+# Live run (minutes + real tokens), both agents.
+npm run test:agent-evals
 
-# Results table, transcripts and per-run detail.
+# One agent.
+npm run test:agent-evals:claude
+npm run test:agent-evals:codex
+
+# Any promptfoo flag — note the `--`, which npm requires before flags.
+npm run test:agent-evals -- --filter-pattern ampersand
+
+# Results table, transcripts, per-run detail.
 npm --prefix test/ai-development/evals run view
 ```
 
-Eval runs keep assertion failures in the report but do not fail the process on a
-red row. Provider and runtime errors still fail the command.
+Runs report assertion failures but do not fail the process on a red row;
+provider and runtime errors still do. Output goes to `results/`, which is
+gitignored, and to promptfoo's own store (`promptfoo list evals`,
+`promptfoo view`).
 
-`results/` is gitignored.
+## Files
 
-## Adding an eval target
+| Path                   | Contents                                                                       |
+| ---------------------- | ------------------------------------------------------------------------------ |
+| `promptfooconfig.yaml` | Providers, sandboxing, concurrency, output. One config holds every agent.      |
+| `prompt.md`            | The task given to the agent.                                                   |
+| `tests.yaml`           | The cases and their assertions — what is actually measured.                    |
+| `fixture-repo.mjs`     | The commit under test, plus any overlay applied to the tree.                   |
+| `agent-provider.mjs`   | Builds the fixture, hands it to a built-in promptfoo provider, cleans up.      |
+| `build-fixture.mjs`    | Rebuilds any commit as a disposable repository. Knows nothing about this eval. |
 
-1. Add a directory named for the skill under test.
-2. Add `fixture-repo.mjs` exporting `createFixtureRepository`, composing
-   `shared/fixture-repo.mjs`. Pass an `overlay` callback if the fixture needs
-   files added or removed beyond what the commit already contains.
-3. Add `promptfooconfig.yaml` with a provider block per agent, and assertions —
-   preferring built-ins (`skill-used`, `trajectory:*`, `word-count`,
-   `contains`), reaching `metadata` via `transform` where a path or tool
-   argument is what matters.
+The agent itself is run by promptfoo's built-in providers
+(`anthropic:claude-code`, `openai:codex-sdk`), which normalise tool calls into
+`metadata.toolCalls`. `agent-provider.mjs` exists only because the fixture has
+to be built per run and promptfoo has no hook that can do that — it sets
+`working_dir` and otherwise passes everything through untouched.
 
-No shared code or `package.json` changes are needed.
+## Gotchas
+
+These are all load-bearing; each one produced a confusing failure at least once.
+
+-   **The agent SDKs must stay direct devDependencies.** promptfoo declares them
+    `optional` and resolves them from _this_ directory, so a copy nested under
+    `promptfoo/node_modules` will not be found.
+-   **Setting `working_dir` silently restricts tools** to `Read`/`Grep`/`Glob`/`LS`.
+    Anything that needs to write must add `append_allowed_tools`, or the agent
+    stops and asks for permission that nothing can grant.
+-   **`apiKeyRequired: false`** lets the Claude CLI use its normal login instead
+    of demanding a separate `ANTHROPIC_API_KEY`.
+-   **`skills/` is not a Claude Code skills directory.** The SDK looks in
+    `.claude/skills`; agents find `skills/` by searching the repo. So
+    `metadata.skillCalls` stays empty and the `skill-used` assertion never fires
+    — assert against `metadata.toolCalls` instead, via an assertion `transform`.
+-   **Agents still read `~/.claude/skills`.** `setting_sources` gates settings,
+    not skills, so a personal skill on the machine can reach a run.
+-   **YAML merge keys (`<<:`) are not resolved** by promptfoo's parser; an
+    anchored provider block yields a silently undefined provider.
+
+To see what an agent loaded at startup, set `debug: true` and
+`debug_file: results/agent.log` in `provider_config` — the SDK's init log records
+settings sources, skills and tools, none of which promptfoo surfaces.
+
+## Adding another eval
+
+The layout is flat and single-eval, because promptfoo only auto-discovers a
+config in the working directory and that is what makes `npm run test:agent-evals`
+work without arguments.
+
+A second eval means giving each one a directory holding its own
+`promptfooconfig.yaml`, `prompt.md`, `tests.yaml` and `fixture-repo.mjs`, and
+passing `--config <dir>/promptfooconfig.yaml` again. `agent-provider.mjs` and
+`build-fixture.mjs` stay here and are shared; `file://` references to them gain
+a `../`.
+
+Prefer promptfoo's built-in assertions (`skill-used`, `trajectory:*`,
+`word-count`, `contains`), reaching provider metadata via an assertion
+`transform` where a path or tool argument is what matters. Drop to a
+`javascript` assertion only where no built-in fits.

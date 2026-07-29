@@ -1,0 +1,29 @@
+# What this target measures. The config alongside it only says how to run the
+# agents; everything about the behaviour under test lives here.
+#
+# `skills/testing/SKILL.md` is a router: it defers to references/jest.md,
+# references/php.md or references/e2e.md depending on the kind of test. An
+# end-to-end task should take the e2e branch and leave the other two unread.
+#
+# `skill-used` cannot express that — the skill is `testing` either way, and the
+# distinction is which reference was opened. `transform` receives the provider
+# response metadata, so each assertion stringifies the run's normalised tool
+# calls and matches a path with a built-in matcher. Nothing custom is loaded.
+- description: e2e test for unencoded ampersands in the paragraph block
+  options:
+      bustCache: true
+  assert:
+      - type: contains
+        transform: JSON.stringify(context.metadata?.toolCalls ?? [])
+        value: skills/testing/references/e2e.md
+        metric: Read the e2e reference
+
+      - type: not-contains
+        transform: JSON.stringify(context.metadata?.toolCalls ?? [])
+        value: skills/testing/references/jest.md
+        metric: Skipped the Jest reference
+
+      - type: not-contains
+        transform: JSON.stringify(context.metadata?.toolCalls ?? [])
+        value: skills/testing/references/php.md
+        metric: Skipped the PHPUnit reference

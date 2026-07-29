@@ -16,10 +16,8 @@
 		"url": "https://github.com/WordPress/gutenberg/issues"
 	},
 	"scripts": {
-		"validate": "promptfoo validate config",
-		"eval": "PROMPTFOO_DISABLE_TELEMETRY=1 PROMPTFOO_FAILED_TEST_EXIT_CODE=0 promptfoo eval --no-cache",
-		"eval:claude": "npm run eval -- --filter-providers claude",
-		"eval:codex": "npm run eval -- --filter-providers codex",
+		"validate": "for c in suites/*/promptfooconfig.yaml; do promptfoo validate config --config \"$c\" || exit 1; done",
+		"eval": "sh lib/run.sh",
 		"view": "promptfoo view"
 	},
 	"devDependencies": {

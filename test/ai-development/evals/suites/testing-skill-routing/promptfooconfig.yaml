@@ -1,3 +1,5 @@
+# yaml-language-server: $schema=https://promptfoo.dev/config-schema.json
+
 # How to run the agents for this target. What is actually being measured lives
 # in tests.yaml, and the task itself in prompt.md.
 #
@@ -15,11 +17,11 @@ providers:
     # The wrapper owns only the disposable fixture; `provider` names the
     # built-in promptfoo provider that runs the agent and normalises its
     # trajectory into metadata.toolCalls.
-    - id: file://agent-provider.mjs
+    - id: file://../../lib/agent-provider.mjs
       label: claude
       config:
           provider: anthropic:claude-code
-          fixture_module: fixture-repo.mjs
+          fixture_module: fixture.mjs
           provider_config:
               # promptfoo refuses to start without ANTHROPIC_API_KEY unless told
               # otherwise. Opt out so the Claude CLI authenticates the way it
@@ -51,11 +53,11 @@ providers:
                   filesystem:
                       allowManagedReadPathsOnly: true
 
-    - id: file://agent-provider.mjs
+    - id: file://../../lib/agent-provider.mjs
       label: codex
       config:
           provider: openai:codex-sdk
-          fixture_module: fixture-repo.mjs
+          fixture_module: fixture.mjs
           provider_config:
               sandbox_mode: workspace-write
               approval_policy: never

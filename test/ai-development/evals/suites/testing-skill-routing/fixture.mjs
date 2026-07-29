@@ -6,7 +6,7 @@
  * files, which is everything the agent needs to find its way to the right one.
  * A target that varies guidance would pass an `overlay` callback instead.
  */
-import { buildFixtureRepository } from './build-fixture.mjs';
+import { buildFixtureRepository } from '../../lib/build-fixture.mjs';
 
 /** Any commit whose tree contains `skills/testing/` works. */
 export const TARGET_COMMIT = '1f27df2962c8f459582eeb41435251713f30c810';

@@ -13,8 +13,8 @@
  *                    or `openai:codex-sdk`.
  *   provider_config  Passed through to that provider. `working_dir` is set by
  *                    this wrapper and cannot be overridden.
- *   fixture_module   Path (relative to `evals/`) of a module exporting
- *                    `createFixtureRepository`.
+ *   fixture_module   Path of a module exporting `createFixtureRepository`,
+ *                    resolved relative to the config file that names it.
  *   fixture_commit   Optional commit override for the fixture module.
  *   fixture_options  Optional extra options forwarded to the fixture module,
  *                    for targets that build more than one variant.
@@ -25,15 +25,25 @@
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
-const evalsDir = path.dirname( fileURLToPath( import.meta.url ) );
-const sourceRoot = path.resolve( evalsDir, '../../..' );
+const libDir = path.dirname( fileURLToPath( import.meta.url ) );
+const sourceRoot = path.resolve( libDir, '../../../..' );
 
-async function loadFixtureModule( fixtureModule ) {
+/**
+ * Loads a suite's fixture module.
+ *
+ * `basePath` is the directory of the config that declared this provider, so a
+ * suite refers to its own fixture by bare filename and stays self-contained.
+ *
+ * @param {string} fixtureModule Path from `fixture_module`.
+ * @param {string} basePath      Directory of the declaring config.
+ * @return {Promise<Object>} The loaded module.
+ */
+async function loadFixtureModule( fixtureModule, basePath ) {
 	if ( ! fixtureModule ) {
 		throw new Error( 'fixture_module is required' );
 	}
 
-	const modulePath = path.resolve( evalsDir, fixtureModule );
+	const modulePath = path.resolve( basePath || libDir, fixtureModule );
 	const loaded = await import( pathToFileURL( modulePath ).href );
 
 	if ( typeof loaded.createFixtureRepository !== 'function' ) {
@@ -92,6 +102,8 @@ export default class GutenbergAgentProvider {
 			options.id ||
 			`gutenberg-agent:${ this.config.provider || 'unconfigured' }`;
 		this.loadApiProvider = options.loadApiProvider;
+		// promptfoo injects the declaring config's directory here.
+		this.basePath = this.config.basePath;
 	}
 
 	id() {
@@ -120,7 +132,8 @@ export default class GutenbergAgentProvider {
 		try {
 			const load = await this.delegate();
 			const { createFixtureRepository } = await loadFixtureModule(
-				this.config.fixture_module
+				this.config.fixture_module,
+				this.basePath
 			);
 
 			fixture = await createFixtureRepository( {

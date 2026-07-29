@@ -18,37 +18,46 @@ run cannot touch your checkout and cannot see this eval's own configuration.
 ```bash
 npm --prefix test/ai-development/evals install
 
-# Check the config without running agents.
+# Check every suite's config without running agents.
 npm --prefix test/ai-development/evals run validate
 
-# Live run (minutes + real tokens), both agents.
+# Live run (minutes + real tokens). No argument runs every suite.
 npm run test:agent-evals
 
-# One agent.
-npm run test:agent-evals:claude
-npm run test:agent-evals:codex
-
-# Any promptfoo flag — note the `--`, which npm requires before flags.
-npm run test:agent-evals -- --filter-pattern ampersand
+# A path runs one suite; flags pass through either way.
+npm run test:agent-evals -- suites/testing-skill-routing/promptfooconfig.yaml
+npm run test:agent-evals -- --filter-providers claude
+npm run test:agent-evals -- suites/testing-skill-routing/promptfooconfig.yaml --repeat 3
 
 # Results table, transcripts, per-run detail.
 npm --prefix test/ai-development/evals run view
 ```
 
+npm needs the `--` before any argument. Everything after it goes to
+`lib/run.sh`, which follows the jest convention: optional leading path, then
+flags.
+
 Runs report assertion failures but do not fail the process on a red row;
 provider and runtime errors still do. Output goes to `results/` (gitignored) and
 to promptfoo's own store, browsable with `promptfoo view`.
 
-## Files
+## Layout
 
-| Path                   | Contents                                                                       |
-| ---------------------- | ------------------------------------------------------------------------------ |
-| `promptfooconfig.yaml` | Providers, sandboxing, concurrency, output. One config holds every agent.      |
-| `prompt.md`            | The task given to the agent.                                                   |
-| `tests.yaml`           | The cases and their assertions — what is actually measured.                    |
-| `fixture-repo.mjs`     | The commit under test, plus any overlay applied to the tree.                   |
-| `agent-provider.mjs`   | Builds the fixture, hands it to a built-in promptfoo provider, cleans up.      |
-| `build-fixture.mjs`    | Rebuilds any commit as a disposable repository. Knows nothing about this eval. |
+```text
+lib/                            harness — rarely touched
+├── agent-provider.mjs          builds the fixture, hands it to a promptfoo provider, cleans up
+├── build-fixture.mjs           rebuilds any commit as a disposable repository
+└── run.sh                      resolves which suites to run
+suites/
+└── testing-skill-routing/      one directory per eval
+    ├── promptfooconfig.yaml    providers, sandboxing, concurrency, output
+    ├── prompt.md               the task given to the agent
+    ├── tests.yaml              cases and assertions — what is measured
+    └── fixture.mjs             the commit under test, plus any overlay
+```
+
+A suite is self-contained: it names its fixture by bare filename, because
+`fixture_module` resolves relative to the config that declares it.
 
 ## Adding a test case
 
@@ -74,16 +83,20 @@ If a case needs the agent to write files, add the tools to
 `Read`/`Grep`/`Glob`/`LS`, and an agent that cannot write will stop and ask for
 permission that nothing can grant.
 
-## Adding another eval
+## Adding a suite
 
-Give each eval its own directory holding a `promptfooconfig.yaml`, `prompt.md`,
-`tests.yaml` and `fixture-repo.mjs`, and pass `--config <dir>/promptfooconfig.yaml`.
-`agent-provider.mjs` and `build-fixture.mjs` stay at this level and are shared;
-`file://` references to them gain a `../`.
+Copy `suites/testing-skill-routing/`, rename it, and edit its four files.
+Nothing in `lib/` or `package.json` needs to change — `run.sh` and `validate`
+both glob `suites/*/promptfooconfig.yaml`.
 
-The current layout is flat because promptfoo auto-discovers a config only in the
-working directory, which is what lets `npm run test:agent-evals` run without
-arguments.
+Start each config with the schema comment for editor autocomplete:
+
+```yaml
+# yaml-language-server: $schema=https://promptfoo.dev/config-schema.json
+```
+
+Once a suite outgrows a single `tests.yaml`, promptfoo will glob a directory
+instead: `tests: file://tests/*`.
 
 ## Debugging a run
 

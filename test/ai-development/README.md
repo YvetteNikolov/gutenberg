@@ -1,31 +1,81 @@
 # AI development tests
 
-This directory contains test infrastructure for the repository's AI-assisted development workflows. These tests answer questions about how a coding agent works in Gutenberg—for example, whether it discovers the right instructions—not whether Gutenberg production code behaves correctly.
+This directory tests Gutenberg's AI-assisted development workflows for effectiveness and efficiency.
 
-Start with:
+## Current suite
 
--   [Agents and Skills](/docs/contributors/code/agents-and-skills.md) for the repository's instruction hierarchy and progressive-discovery model.
--   [Testing Overview](/docs/contributors/code/testing-overview.md) for the principles shared by all Gutenberg tests.
--   [Agent evals](./evals/README.md) for setup, execution, and authoring details.
+The standalone `evals/` package uses [Promptfoo](https://www.promptfoo.dev/docs/) to run coding agents against isolated temporary repositories.
 
-## Contents
+## How it works
 
-| Path                 | Purpose                                                                |
-| -------------------- | ---------------------------------------------------------------------- |
-| [`evals/`](./evals/) | Promptfoo evaluations that run coding agents against disposable repos. |
+Promptfoo runs the prompt × provider × test × repeat matrix. Its standard lifecycle hooks create a clean Git workspace from the committed `HEAD` before each row and remove it afterward. The native Claude and Codex providers receive that directory as `working_dir`.
 
-## How these tests differ from conventional tests
+The subject workspace excludes `test/ai-development/evals/`, so the agent cannot inspect its prompt configuration or assertions. Uncommitted repository changes are not included.
 
-Agent evaluations are slower, stochastic, and can consume paid model usage. Their results can also depend on the provider, model, authentication method, agent SDK, and user-level agent configuration. Run a focused provider and suite while developing, then repeat the completed evaluation enough times to expose intermittent behavior.
+See Promptfoo's [coding-agent guide](https://www.promptfoo.dev/docs/guides/evaluate-coding-agents/) and [extension hooks](https://www.promptfoo.dev/docs/configuration/reference/#extension-hooks).
 
-Use the narrowest test that answers the question:
+## Setup
 
--   Prefer deterministic JavaScript, PHP, or end-to-end tests for production behavior.
--   Use an agent evaluation when the behavior under test requires an agent's instruction discovery, tool use, or multi-step decisions.
--   Name the exact behavior an evaluation measures. A routing assertion does not prove that the agent's final code is correct.
+Use Node.js 22.22 or newer; Node.js 24 LTS is recommended.
 
-## Working in this directory
+```bash
+npm --prefix test/ai-development/evals install
+```
 
-The evaluation runner must not use the contributor's checkout as the subject workspace. Each subject agent receives a temporary repository, constrained tools, and no network access from its shell. Keep prompts, expected behavior, and evaluation-only data outside that repository so the agent cannot read its own answer.
+A root `npm install` does not install this nested package.
 
-The Promptfoo project under `evals/` has its own dependencies and lockfile. It is intentionally installed and run separately from the root npm workspace; see its README for the exact commands.
+Codex can use an existing Codex/ChatGPT login or `OPENAI_API_KEY`/`CODEX_API_KEY`. Claude can use an existing Claude Code login or `ANTHROPIC_API_KEY`. Model calls consume the associated quota or paid usage.
+
+## Run
+
+Run from the repository root:
+
+```bash
+# Validate configuration without model calls.
+npm --prefix test/ai-development/evals run validate
+
+# Run every suite and provider.
+npm run test:agent-evals
+
+# Run one suite.
+npm run test:agent-evals -- suites/testing-skill-routing/promptfooconfig.yaml
+
+# Run one provider.
+npm run test:agent-evals -- suites/testing-skill-routing/promptfooconfig.yaml --filter-providers codex
+npm run test:agent-evals -- suites/testing-skill-routing/promptfooconfig.yaml --filter-providers claude
+
+# Override repeats.
+npm run test:agent-evals -- suites/testing-skill-routing/promptfooconfig.yaml --repeat 3
+
+# Open the local results viewer.
+npm --prefix test/ai-development/evals run view
+```
+
+The runner disables Promptfoo telemetry and response caching. Assertion failures produce failed rows without a nonzero process exit; provider and runtime errors still fail the command. Treat the results table as the outcome.
+
+Results under `evals/results/` are gitignored and may contain source code and tool output.
+
+## Files
+
+```text
+evals/
+├── lib/
+│   ├── workspace-extension.mjs     beforeEach/afterEach workspace lifecycle
+│   └── run.sh                      suite selection and shared CLI behavior
+├── package.json
+├── package-lock.json
+└── suites/testing-skill-routing/
+    ├── promptfooconfig.yaml        providers, tracing, permissions, repeats
+    ├── prompt.md                   task shown to the agent
+    └── tests.yaml                  assertions and named metrics
+```
+
+## Authoring
+
+For each suite:
+
+1. State the narrow claim the evaluation supports.
+2. Write a realistic prompt that does not reveal the expected behavior.
+3. Configure native providers and tracing in `promptfooconfig.yaml`.
+4. Put cases and named metrics in `tests.yaml`.
+5. Validate, run one provider once, then run the intended matrix with repeats.

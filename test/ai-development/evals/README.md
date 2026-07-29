@@ -1,151 +1,172 @@
 # Agent skill evals
 
-Promptfoo evals that verify the agent skills in `skills/` are **discovered,
-followed, and effective** — starting with `skills/pull-requests/SKILL.md`.
+A [promptfoo](https://promptfoo.dev) harness for measuring whether the agent
+skills in `skills/` are discovered and followed.
 
-These evals run through [promptfoo](https://promptfoo.dev), so results land in a
-comparable table (`npm run view`) and output quality is graded, not just tool
-usage.
+**This is currently a scaffold.** The wiring is real; what the eval measures is
+a placeholder. See [Filling in an eval](#filling-in-an-eval).
 
-## What the PR-skill eval checks
+## The one architectural rule
 
-The agent is asked to author a PR description for a pinned commit
-(`1f27df296` — Notes: sync the sidebar selection to the caret marker), defined
-once as `TARGET_COMMIT` in `pull-requests/fixture-repo.mjs`. The provider builds
-a disposable two-commit repository from that historical change, overlays the
-guidance variant under test, and captures the transcript.
+**The fixture is ours. Everything else is promptfoo's.**
 
-The fixture contains the Gutenberg source and guidance needed for the task, but
-does not contain this eval's configuration, graders, or golden answers.
+Rebuilding a historical Gutenberg commit into a throwaway repository, with a
+guidance variant overlaid, is something promptfoo cannot know about — so we own
+it. Running an agent, capturing its tool calls, and normalising those calls
+across vendors are solved problems, so we do not.
 
-**Process** (from the transcript — did the agent do the right things?)
-
--   Follow the shared instruction route: Claude loads `CLAUDE.md`, which points
-    directly to `AGENTS.md`, and both agents read
-    `skills/pull-requests/SKILL.md`
--   Read the template: read `.github/PULL_REQUEST_TEMPLATE.md`
--   Inspected the diff: ran `git show`/`diff`/`log` (the skill's
-    "describe the committed diff" rule)
-
-**Output** (deterministic, `pull-requests/grade-pr-description.cjs`)
-
--   Template sections present and in order (What / Why / How / Testing Instructions)
--   Keyboard testing section (this fixture is a UI/caret change, where the
-    template requires it)
--   Numbered testing steps ending in an observable result ("Confirm …")
--   No environment-setup boilerplate in testing steps
--   Non-empty AI-tools disclosure
--   Succinct (≤ 450 words; the skill asks for under 400, the grader allows a
-    small tolerance for run-to-run variance)
-
-**Quality** (`llm-rubric`) — would the description actually help a reviewer,
-or is it a technically accurate file inventory?
-
-Both agent configs compare two otherwise-identical fixtures:
-
--   **Candidate** includes the pull-request skill and its agent routing.
--   **Control** omits that skill and routing while retaining the same PR
-    template and other repository guidance.
-
-Each provider runs twice. The candidate-control score delta is more useful than
-expecting one particular row to always be red: it shows whether the skill is
-helping, neutral, or regressing over time.
-
-The eval scripts keep assertion failures in the report but do not return a
-failing process status merely because a control row is red. Provider/runtime
-errors still fail the command.
-
-## Organization
-
-Each evaluation target owns everything specific to that target:
+Concretely, promptfoo's built-in agent providers populate
+`metadata.toolCalls` and `metadata.skillCalls`, and its `skill-used`,
+`trajectory:*` and `word-count` assertions read them. Nothing here parses a raw
+shell string or defines its own transcript shape.
 
 ```text
-evals/
-├── shared/
-│   ├── agent-provider.mjs
-│   └── summarize-results.mjs
-└── pull-requests/
-    ├── fixtures/
-    ├── default-test.yaml          # grading contract shared by both agents
-    ├── fixture-repo.mjs           # owns TARGET_COMMIT
-    ├── grade-pr-description.cjs
-    ├── prompt.md                  # task prompt shared by both agents
-    ├── promptfooconfig.claude.yaml
-    ├── promptfooconfig.codex.yaml
-    ├── test-fixture.mjs
-    └── test-grader.mjs
+promptfooconfig.<agent>.yaml
+        │
+        ├─ providers ──► shared/agent-provider.mjs        (ours: ~130 lines)
+        │                   │
+        │                   ├─ build fixture ────────────► pull-requests/fixture-repo.mjs
+        │                   │                                  └─► shared/fixture-repo.mjs
+        │                   ├─ delegate ─────────────────► anthropic:claude-code
+        │                   │                               openai:codex-sdk    (promptfoo)
+        │                   └─ merge fixture metadata, clean up
+        │
+        └─ defaultTest ─► default-test.yaml                (promptfoo built-ins only)
 ```
 
-The shared provider loads the fixture builder named by each config's
-`fixture_module`. The reporter discovers configured `outputPath` values and
-groups results by `evaluation`, so adding a target does not require changing
-shared code.
+The package depends on `promptfoo` and nothing else — no agent SDKs, because
+we no longer invoke them.
 
-Each agent config carries only what is agent-specific: its providers, its
-`description`, and its `outputPath`. The prompt, the assertions, the judge, and
-the commit under test are defined once and shared, so the two agents cannot
-drift into being graded differently.
+## Why the wrapper provider exists
 
-Within a config, `file://` paths resolve **relative to that config file's own
-directory** — hence `file://../shared/agent-provider.mjs` from `pull-requests/`.
-The `fixture_module` key is not a promptfoo path; it is resolved by
-`shared/agent-provider.mjs` relative to the `evals/` root.
+It is the only custom runtime code, and it exists for one reason: the fixture
+must be built per run _and_ per provider, and promptfoo offers no seam for that.
+
+-   `extensions` `beforeEach` hooks receive only `{ test }` — no provider — so a
+    hook cannot know whether to build the candidate or the control fixture.
+-   Provider config is not rendered with test vars, and providers are
+    instantiated once per suite, so a per-run `working_dir` cannot be passed
+    through config.
+
+So the wrapper builds the fixture, sets `working_dir`, hands off to the native
+provider, and deletes the fixture in a `finally`. It does not touch the agent's
+output or metadata beyond adding four fields the reporter needs.
+
+If promptfoo later exposes the provider in extension hooks, or renders provider
+config per test, this file can be deleted.
+
+## Layers
+
+| Path                                   | Owns                                                                                                           |
+| -------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| `shared/agent-provider.mjs`            | Fixture lifecycle and delegation. Agent-agnostic — `provider:` names the native promptfoo provider.            |
+| `shared/fixture-repo.mjs`              | Rebuilding any commit as a disposable two-commit repo. Knows nothing about any eval.                           |
+| `shared/summarize-results.mjs`         | The candidate-control delta — the only analysis promptfoo does not do. Use `npm run view` for everything else. |
+| `pull-requests/fixture-repo.mjs`       | The guidance overlay this target varies, and `TARGET_COMMIT`.                                                  |
+| `pull-requests/default-test.yaml`      | Grading contract, shared by both agent configs.                                                                |
+| `pull-requests/prompt.md`              | Task prompt, shared by both agent configs.                                                                     |
+| `pull-requests/promptfooconfig.*.yaml` | Only what is agent-specific: providers, description, `outputPath`.                                             |
+
+Adding an agent is a config change. Adding an eval target means a new directory
+with a fixture module, a prompt, and a grading contract — no shared code
+changes.
+
+## The candidate/control design
+
+Each config runs the same task twice against fixtures that differ in exactly one
+way:
+
+-   **Candidate** — the skill and its `AGENTS.md` routing are present.
+-   **Control** — both removed; every other repository instruction identical.
+
+The per-metric delta between the two arms is the output that matters, not
+whether any single row is green. `skill-used` is _expected_ to fail on the
+control arm — that failure is the measurement.
+
+The control fixture throws if the routing fragment it strips is not found in
+`AGENTS.md`, so a reworded instruction cannot silently turn the control into a
+duplicate of the candidate.
+
+## Isolation
+
+Subject agents run in a disposable repository with network and web search
+disabled, and may write only inside that fixture, which is deleted afterwards.
+The developer's checkout is never the working directory. The fixture contains
+the Gutenberg source and guidance needed for the task, but not this eval's
+configuration or grading contract.
+
+Isolation is configured on the native providers (`sandbox_mode`,
+`network_access_enabled`, `setting_sources`) rather than enforced by our code.
+
+> **Unverified:** the `sandbox` sub-schema for `anthropic:claude-code` has not
+> been confirmed against an installed 0.121.x. Network isolation for the Claude
+> arm must be set before the first live run — see the `TODO` in
+> `promptfooconfig.claude.yaml`. The Codex arm is fully specified.
+
+## Conventions worth knowing
+
+-   `file://` paths in a config resolve **relative to that config file's own
+    directory** — hence `file://../shared/agent-provider.mjs`.
+-   `fixture_module` is not a promptfoo path; the wrapper resolves it relative to
+    the `evals/` root.
+-   promptfoo's YAML parser does **not** resolve `<<:` merge keys. An anchored
+    provider block yields a silently undefined provider, so blocks are spelled
+    out.
 
 ## Running
 
 ```bash
-# Install the isolated eval toolchain once.
 npm --prefix test/ai-development/evals install
 
-# Fast, free: test the grader and disposable fixtures.
-npm run test:agent-evals
-
-# Validate the Promptfoo configs without running live agents.
+# Validate config wiring without running agents.
 npm --prefix test/ai-development/evals run validate:pull-requests
 
-# Live agent runs (minutes + real tokens each):
+# Live agent runs (minutes + real tokens each).
 npm run test:agent-evals:pull-requests:claude
 npm run test:agent-evals:pull-requests:codex
 
-# Summarize pass rates plus separate compliance and usefulness deltas.
+# Candidate-control delta per metric.
 npm --prefix test/ai-development/evals run report
 
-# Append that summary to a local JSONL history file.
-npm --prefix test/ai-development/evals run report:record
-
-# Browse the detailed Promptfoo results.
+# Full results table, transcripts and per-run detail.
 npm --prefix test/ai-development/evals run view
 ```
 
-Subject agents run in disposable repositories with network and web search
-disabled. They may write inside the fixture, which is deleted after the run;
-the developer's checkout is not used as the subject working directory. Both
-agents' outputs are graded by the same tool-free Claude judge so their rubric
-scores are comparable.
+The eval scripts keep assertion failures in the report but do not fail the
+process merely because a control row is red. Provider and runtime errors still
+fail the command.
 
-`results/history.jsonl` is intentionally ignored. Keep it locally for
-development comparisons, or retain it as a scheduled-job artifact when these
-evals are automated.
+`results/` is gitignored.
 
-This package intentionally keeps its own lockfile instead of joining the root
-npm workspace. Promptfoo's large, fast-moving dependency graph currently
-hoists versions that conflict with Gutenberg's lint toolchain; keeping the eval
-runner isolated avoids changing production development dependencies.
+### Node version
 
-Promptfoo is intentionally held on the `0.120.x` release line. Versions from
-`0.121.x` require Node.js `^20.20.0` or `>=22.22.0`, while Gutenberg's
-checked-in development runtime is Node.js `20.19.0`. Upgrade Promptfoo after
-Gutenberg raises that runtime; until then, the older compatible line keeps the
-standard setup working without requiring a second Node.js installation.
+Requires Node `^20.20.0 || >=22.22.0` — what promptfoo 0.121 needs for
+`skill-used` and the `trajectory:*` assertions. That is compatible with
+Gutenberg's `engines.node` (`>=20.19.0`) and an unpinned `.nvmrc` of `20`; only
+a checkout sitting exactly on 20.19.x needs to move. `better-sqlite3` is
+compiled per Node major, so switching majors requires reinstalling this package.
+
+## Filling in an eval
+
+The scaffold deliberately ships a placeholder rubric and a trivial
+`trajectory:tool-used` assertion. To make it measure something:
+
+1. Pick a pinned commit where following the skill visibly changes the output,
+   and set `TARGET_COMMIT`.
+2. Write the task prompt in `prompt.md`.
+3. Build the grading contract in `default-test.yaml`, preferring built-ins
+   (`skill-used`, `trajectory:*`, `word-count`, `contains-all`, `regex`) and
+   dropping to a `javascript` assertion over `metadata.toolCalls` only where no
+   built-in fits.
+4. Add tests for whatever custom assertion code step 3 required.
 
 ## Adding an eval for a new skill
 
-1. Pick a pinned commit where following the skill visibly changes the output.
-2. Add a directory named for the skill, following the `pull-requests/` shape.
-3. Add a fixture builder, deterministic grader, canned samples, and tests
-   inside that directory; make those tests pass before burning agent tokens.
-4. Add a shared `prompt.md` and `default-test.yaml` that combine the grader with
-   an `llm-rubric` for judgment calls regexes cannot make, then add thin Claude
-   and Codex configs that set a unique `evaluation`, reference the target's
-   `fixture_module`, and point `defaultTest` at that shared file.
-5. Add the target's deterministic and live commands to `package.json`.
+1. Add a directory named for the skill, following the `pull-requests/` shape.
+2. Add a fixture module composing `shared/fixture-repo.mjs` with an `overlay`
+   for the guidance being varied.
+3. Add `prompt.md` and `default-test.yaml`.
+4. Add thin Claude and Codex configs that set a unique `evaluation`, name the
+   native `provider`, reference the target's `fixture_module`, and point
+   `defaultTest` at the shared file.
+5. Add the target's live commands to `package.json`.

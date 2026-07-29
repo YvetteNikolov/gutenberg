@@ -1,8 +1,10 @@
 # Codex variant of the pull-requests skill eval. Candidate and control providers
 # run in separate disposable fixtures with and without the skill guidance.
 #
-# The prompt and grading contract are shared with the Claude config; the commit
-# under test is owned by pull-requests/fixture-repo.mjs.
+# The wrapper provider owns only the fixture; `provider` names the built-in
+# promptfoo agent provider that actually runs the agent and normalises its
+# trajectory. The prompt and grading contract are shared with the Claude config;
+# the commit under test is owned by pull-requests/fixture-repo.mjs.
 #
 # `file://` paths resolve relative to this file's directory.
 description: Verify the pull-requests skill is discovered, followed, and produces a review-ready PR description (Codex)
@@ -15,7 +17,13 @@ providers:
     - id: file://../shared/agent-provider.mjs
       label: Codex with repo guidance
       config:
-          agent: codex
+          provider: openai:codex-sdk
+          provider_config:
+              sandbox_mode: workspace-write
+              approval_policy: never
+              network_access_enabled: false
+              web_search_mode: disabled
+              skip_git_repo_check: true
           evaluation: pull-requests
           fixture_module: pull-requests/fixture-repo.mjs
           guidance: candidate
@@ -23,7 +31,13 @@ providers:
     - id: file://../shared/agent-provider.mjs
       label: Codex control guidance
       config:
-          agent: codex
+          provider: openai:codex-sdk
+          provider_config:
+              sandbox_mode: workspace-write
+              approval_policy: never
+              network_access_enabled: false
+              web_search_mode: disabled
+              skip_git_repo_check: true
           evaluation: pull-requests
           fixture_module: pull-requests/fixture-repo.mjs
           guidance: control
@@ -36,7 +50,7 @@ tests:
           case: notes-caret-sidebar-sync
 
 evaluateOptions:
-    maxConcurrency: 1
+    maxConcurrency: 2
     repeat: 2
 
 outputPath: results/raw/pull-requests-codex.json

@@ -5,8 +5,14 @@
 # fixtures differ only in whether the pull-requests skill and its routing are
 # present, so the candidate-control delta measures the guidance under test.
 #
-# The prompt and grading contract are shared with the Codex config; the commit
-# under test is owned by pull-requests/fixture-repo.mjs.
+# The wrapper provider owns only the fixture; `provider` names the built-in
+# promptfoo agent provider that actually runs the agent and normalises its
+# trajectory. The prompt and grading contract are shared with the Codex config;
+# the commit under test is owned by pull-requests/fixture-repo.mjs.
+#
+# The two provider blocks are spelled out rather than sharing a YAML anchor:
+# promptfoo's parser does not resolve `<<:` merge keys, so an anchored block
+# silently yields an undefined provider.
 #
 # `file://` paths resolve relative to this file's directory.
 description: Verify the pull-requests skill is discovered, followed, and produces a review-ready PR description
@@ -19,20 +25,51 @@ providers:
     - id: file://../shared/agent-provider.mjs
       label: Claude Code with repo guidance
       config:
-          agent: claude
+          provider: anthropic:claude-code
+          provider_config:
+              model: sonnet
+              max_turns: 50
+              # Only project-level instructions, so the developer's own
+              # ~/.claude guidance cannot leak into the subject.
+              setting_sources: ['project']
+              custom_allowed_tools: ['Bash', 'Read', 'Glob', 'Grep']
+              disallowed_tools:
+                  [
+                      'Write',
+                      'Edit',
+                      'NotebookEdit',
+                      'Task',
+                      'WebFetch',
+                      'WebSearch',
+                  ]
+              # TODO: confirm the `sandbox` sub-schema against the installed
+              # 0.121.x provider before the first live run — network must be
+              # disabled and writes confined to working_dir.
           evaluation: pull-requests
           fixture_module: pull-requests/fixture-repo.mjs
           guidance: candidate
-          setting_sources: ['project']
 
     - id: file://../shared/agent-provider.mjs
       label: Claude Code control guidance
       config:
-          agent: claude
+          provider: anthropic:claude-code
+          provider_config:
+              model: sonnet
+              max_turns: 50
+              setting_sources: ['project']
+              custom_allowed_tools: ['Bash', 'Read', 'Glob', 'Grep']
+              disallowed_tools:
+                  [
+                      'Write',
+                      'Edit',
+                      'NotebookEdit',
+                      'Task',
+                      'WebFetch',
+                      'WebSearch',
+                  ]
           evaluation: pull-requests
           fixture_module: pull-requests/fixture-repo.mjs
           guidance: control
-          setting_sources: ['project']
 
 defaultTest: file://default-test.yaml
 
@@ -42,7 +79,7 @@ tests:
           case: notes-caret-sidebar-sync
 
 evaluateOptions:
-    maxConcurrency: 1
+    maxConcurrency: 2
     repeat: 2
 
 outputPath: results/raw/pull-requests-claude.json

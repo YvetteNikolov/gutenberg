@@ -184,7 +184,6 @@
 		"test:unit:php:multisite:debug": "npm-run-all test:unit:php:setup:debug test:unit:php:multisite:base",
 		"test:unit:update": "npm run --workspace @wordpress/unit-tests test:unit -- --updateSnapshot",
 		"test:unit:watch": "npm run --workspace @wordpress/unit-tests test:unit:watch --",
-		"test:agent-evals": "npm --prefix test/ai-development/evals test",
 		"test:agent-evals:pull-requests:claude": "npm --prefix test/ai-development/evals run eval:pull-requests:claude",
 		"test:agent-evals:pull-requests:codex": "npm --prefix test/ai-development/evals run eval:pull-requests:codex",
 		"wp-env": "wp-env",

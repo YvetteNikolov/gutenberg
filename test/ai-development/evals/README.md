@@ -138,10 +138,6 @@ fail the command.
 
 `results/` is gitignored.
 
-Runs on the repo's default Node (`.nvmrc`). This package declares no `engines`
-of its own — promptfoo's own requirement governs, and npm reports it if your
-Node is too old.
-
 ## Filling in an eval
 
 The scaffold deliberately ships a placeholder rubric and a trivial

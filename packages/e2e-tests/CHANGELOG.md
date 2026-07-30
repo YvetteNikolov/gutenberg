@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+### Enhancements
+
+-   Remove the stale Jest peer dependency; this package only provides fixtures
+    used by Playwright end-to-end tests.
+
 ## 9.16.0 (2026-07-14)
 
 ### Enhancements

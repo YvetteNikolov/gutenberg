@@ -160,8 +160,7 @@ function expectLocalOverride() {
 // Asserts the placeholder treatment for a control. A control can inherit a
 // value while showing no placeholder when the inherited sides differ
 // (BoxControl cannot render a per-side placeholder). Kept as a helper so the
-// branch isn't a conditional `expect` in the test body (which
-// `jest/no-conditional-expect` disallows).
+// branch is kept out of the test body and the assertions stay focused.
 function expectPlaceholderState( el, placeholder ) {
 	if ( placeholder ) {
 		expect( el ).toHaveAttribute( 'placeholder', placeholder );

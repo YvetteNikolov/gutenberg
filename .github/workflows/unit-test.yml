@@ -24,8 +24,8 @@ concurrency:
 permissions: {}
 
 jobs:
-    unit-js-routing:
-        name: JavaScript test routing
+    unit-js-invariants:
+        name: JavaScript test invariants
         runs-on: 'ubuntu-24.04'
         permissions:
             contents: read
@@ -43,9 +43,6 @@ jobs:
               with:
                   node-version: '20'
 
-            - name: Validate JavaScript test routing
-              run: npm run test:unit:routing
-
             - name: Build package TypeScript declarations
               run: |
                   npx lerna run build
@@ -54,6 +51,9 @@ jobs:
 
             - name: Validate Vitest conventions and TypeScript test graph
               run: npm run test:unit:conventions
+
+            - name: Validate Jest removal
+              run: npm run test:unit:no-jest
 
     unit-js:
         name: JavaScript (Node.js ${{ matrix.node }}) ${{ matrix.shard }}
@@ -93,19 +93,6 @@ jobs:
               # build tasks, however. These must be run.
               run: npx lerna run build
 
-            - name: Run the remaining published Jest tooling tests
-              env:
-                  SHARD: ${{ matrix.shard }}
-                  FK_ENV_NODEJS: ${{ matrix.node }}
-              run: |
-                  node ./node_modules/jest/bin/jest.js \
-                    --config=test/unit/jest.config.js \
-                    --ci \
-                    --maxWorkers="$(nproc)" \
-                    --shard="$SHARD" \
-                    --cacheDirectory="$HOME/.jest-cache" \
-                    --passWithNoTests
-
             - name: Validate packed Vitest package consumers
               if: ${{ matrix.shard == '1/4' }}
               run: npm run test:unit:packages
@@ -116,8 +103,8 @@ jobs:
             - name: Run the Vitest projects
               env:
                   SHARD: ${{ matrix.shard }}
-                  # Preserve the same Flakiness.io environment identity used
-                  # by the Jest partition.
+                  # Preserve the existing Flakiness.io Node environment
+                  # dimension.
                   FK_ENV_NODEJS: ${{ matrix.node }}
               run: |
                   npm run test:unit -- \

@@ -12,7 +12,6 @@ const {
 	spawnScript,
 } = require( './cli' );
 const {
-	getJestOverrideConfigFile,
 	getVitestOverrideConfigFile,
 	getPhpFilePaths,
 	getProjectSourcePath,
@@ -20,7 +19,6 @@ const {
 	getWebpackEntryPoints,
 	hasBabelConfig,
 	hasCssnanoConfig,
-	hasJestConfig,
 	hasVitestConfig,
 	hasPostCSSConfig,
 	hasPrettierConfig,
@@ -45,7 +43,6 @@ module.exports = {
 	getArgFromCLI,
 	getArgsFromCLI,
 	getFileArgsFromCLI,
-	getJestOverrideConfigFile,
 	getVitestOverrideConfigFile,
 	getNodeArgsFromCLI,
 	getPackageProp,
@@ -59,7 +56,6 @@ module.exports = {
 	hasBabelConfig,
 	hasCssnanoConfig,
 	hasFileArgInCLI,
-	hasJestConfig,
 	hasVitestConfig,
 	hasPackageProp,
 	hasPostCSSConfig,

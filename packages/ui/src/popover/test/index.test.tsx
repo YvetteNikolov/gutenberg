@@ -422,7 +422,7 @@ describe( 'Popover', () => {
 			} );
 			// The regression this guards against: `useRender` must still
 			// forward the user-supplied className to the underlying DOM node.
-			// CSS module classes are stubbed in the Jest environment, so we
+			// CSS module classes use the unit-test style alias, so we
 			// can only assert the user class end-to-end.
 			expect( heading ).toHaveClass( 'custom-title' );
 		} );

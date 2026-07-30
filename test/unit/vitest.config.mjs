@@ -1,7 +1,6 @@
 /**
  * Node dependencies
  */
-import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -16,19 +15,13 @@ import { defineConfig } from 'vitest/config';
 /**
  * Internal dependencies
  */
-import { getVitestTestsByProject } from './scripts/discover-test-files.mjs';
+import { getVitestTestsByProject } from './scripts/test-projects.mjs';
 
 const ROOT_DIR = path.resolve(
 	path.dirname( fileURLToPath( import.meta.url ) ),
 	'../..'
 );
-const testMigration = JSON.parse(
-	readFileSync(
-		path.join( ROOT_DIR, 'test/unit/test-migration.json' ),
-		'utf8'
-	)
-);
-const vitestTests = getVitestTestsByProject( ROOT_DIR, testMigration );
+const vitestTests = getVitestTestsByProject( ROOT_DIR );
 const { sync: glob } = globPackage;
 const reporters = [ 'default' ];
 const styleMockAlias = {
@@ -77,8 +70,8 @@ export default defineConfig( {
 				[
 					'@swc/plugin-emotion',
 					{
-						// Jest's Babel transform preserved Emotion labels in
-						// test snapshots regardless of NODE_ENV.
+						// Preserve the Emotion labels used by existing
+						// snapshots regardless of NODE_ENV.
 						autoLabel: 'always',
 						labelFormat: '[local]',
 					},

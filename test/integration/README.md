@@ -54,6 +54,9 @@ To regenerate all fixtures from scratch:
 npm run fixtures:regenerate
 ```
 
-## Jest Configuration
+## Vitest Configuration
 
-These tests reuse the Jest configuration from `test/unit/jest.config.js`. There is no separate Jest config in this directory — `test/unit`'s config sets `rootDir` to the repo root, which automatically discovers tests in this directory.
+These tests use the repository Vitest configuration in
+`test/unit/vitest.config.mjs`. There is no separate configuration in this
+directory; the shared test-project routing discovers these files and assigns
+them to the jsdom project.

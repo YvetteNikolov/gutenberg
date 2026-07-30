@@ -131,13 +131,13 @@ Whilst waiting for the GitHub actions build for `wp/latest`[branch to pass](http
 1. `git checkout wp/latest`
 2. `npx lerna updated`
    Example:
-   ```shell
-   npx lerna updated
-   @wordpress/e2e-tests
-   @wordpress/jest-preset-default
-   @wordpress/scripts
-   lerna success found 3 packages ready to publish
-   ```
+    ```shell
+    npx lerna updated
+    @wordpress/e2e-tests
+    @wordpress/scripts
+    @wordpress/vitest-preset-default
+    lerna success found 3 packages ready to publish
+    ```
 
 Check the versions listed in the current `CHANGELOG.md` file, looking through the commit history of a package e.g [@wordpress/scripts](https://github.com/WordPress/gutenberg/commits/HEAD/packages/scripts) and look out for _"chore(release): publish"_ and _"Update changelogs"_ commits to determine recent version bumps, then looking at the commits since the most recent release should aid with discovering what changes have occurred since the last release.
 

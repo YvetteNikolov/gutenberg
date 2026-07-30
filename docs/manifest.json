@@ -2604,18 +2604,6 @@
 		"parent": "packages"
 	},
 	{
-		"title": "@wordpress/jest-console",
-		"slug": "packages-jest-console",
-		"markdown_source": "../packages/jest-console/README.md",
-		"parent": "packages"
-	},
-	{
-		"title": "@wordpress/jest-preset-default",
-		"slug": "packages-jest-preset-default",
-		"markdown_source": "../packages/jest-preset-default/README.md",
-		"parent": "packages"
-	},
-	{
 		"title": "@wordpress/keyboard-shortcuts",
 		"slug": "packages-keyboard-shortcuts",
 		"markdown_source": "../packages/keyboard-shortcuts/README.md",
@@ -2901,6 +2889,18 @@
 		"title": "@wordpress/vips",
 		"slug": "packages-vips",
 		"markdown_source": "../packages/vips/README.md",
+		"parent": "packages"
+	},
+	{
+		"title": "@wordpress/vitest-console",
+		"slug": "packages-vitest-console",
+		"markdown_source": "../packages/vitest-console/README.md",
+		"parent": "packages"
+	},
+	{
+		"title": "@wordpress/vitest-preset-default",
+		"slug": "packages-vitest-preset-default",
+		"markdown_source": "../packages/vitest-preset-default/README.md",
 		"parent": "packages"
 	},
 	{

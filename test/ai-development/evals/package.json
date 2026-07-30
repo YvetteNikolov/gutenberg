@@ -17,7 +17,7 @@
 	},
 	"scripts": {
 		"validate": "for c in suites/*/promptfooconfig.yaml; do promptfoo validate config --config \"$c\" || exit 1; done",
-		"eval": "promptfoo eval",
+		"eval": "PROMPTFOO_EVAL_TIMEOUT_MS=180000 promptfoo eval --config lib/promptfooconfig.yaml",
 		"view": "promptfoo view"
 	},
 	"devDependencies": {

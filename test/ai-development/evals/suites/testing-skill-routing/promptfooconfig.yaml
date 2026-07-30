@@ -1,9 +1,10 @@
 # yaml-language-server: $schema=https://promptfoo.dev/config-schema.json
 
 # How to run the agents for this target. What is actually being measured lives
-# in tests.yaml, and the task itself in prompt.md.
+# in tests.yaml, and the task itself in prompt.md. Shared tracing lives in
+# ../../lib/promptfooconfig.yaml.
 #
-# Both agents live in this one config; promptfoo runs the matrix. Use
+# Both agents live in this one config; Promptfoo runs the matrix. Use
 # `--filter-providers claude` (or `codex`) to run just one.
 #
 # `file://` paths resolve relative to this file's directory.
@@ -22,23 +23,8 @@ defaultTest: file://../../lib/default-test.yaml
 
 tests: file://tests.yaml
 
-tracing:
-    enabled: true
-    failOnReceiverStartFailure: true
-    # Promptfoo recognizes Codex's exec_command by default. Claude calls its
-    # equivalent shell tool Bash, so declare that additional command tool name.
-    commandToolNames: ['Bash']
-    otlp:
-        http:
-            enabled: true
-            host: 127.0.0.1
-            port: 4318
-            acceptFormats: ['json']
-
 evaluateOptions:
     maxConcurrency: 2
     repeat: 2
-    # Stop a runaway provider call without ending the entire evaluation.
-    timeoutMs: 180000
 
 outputPath: results/raw/testing.json

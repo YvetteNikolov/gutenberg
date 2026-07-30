@@ -93,6 +93,7 @@ Results under `evals/results/` are gitignored and may contain source code and to
 evals/
 ├── lib/
 │   ├── default-test.yaml           shared test options
+│   ├── promptfooconfig.yaml        shared runtime configuration
 │   ├── providers.yaml              shared coding agents
 │   └── workspace-extension.mjs     workspace lifecycle
 ├── package.json

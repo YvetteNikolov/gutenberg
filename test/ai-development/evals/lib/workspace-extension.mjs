@@ -78,7 +78,26 @@ async function cleanupWorkspace( workspace ) {
 	}
 
 	activeWorkspaces.delete( workspace );
-	await fs.rm( temporaryRoot, { recursive: true, force: true } );
+	for ( let attempt = 1; attempt <= 5; attempt++ ) {
+		try {
+			await fs.rm( temporaryRoot, { recursive: true, force: true } );
+			return;
+		} catch ( error ) {
+			if ( attempt === 5 ) {
+				throw error;
+			}
+			// Docker Desktop can leave deny-delete ACLs on bind-mounted
+			// directories after wp-env stops.
+			if ( process.platform === 'darwin' ) {
+				await execFileAsync( 'chmod', [ '-RN', temporaryRoot ] ).catch(
+					() => undefined
+				);
+			}
+			await new Promise( ( resolve ) =>
+				setTimeout( resolve, attempt * 250 )
+			);
+		}
+	}
 }
 
 export async function extensionHook( hookName, context ) {

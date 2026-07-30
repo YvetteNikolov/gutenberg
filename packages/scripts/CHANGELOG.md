@@ -6,7 +6,8 @@
 
 -   Run `test-unit-js` with Vitest 4 instead of Jest, replace the
     `test-unit-jest` alias with `test-unit-vitest`, require Node.js 20.19 or
-    newer, and use ESM Vitest configuration.
+    newer, and use ESM Vitest configuration
+    ([#80998](https://github.com/WordPress/gutenberg/pull/80998)).
 -   Upgrade the bundled Jest packages from v29 to v30 ([#80767](https://github.com/WordPress/gutenberg/pull/80767)).
 
 ### Enhancements

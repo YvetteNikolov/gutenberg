@@ -16,9 +16,9 @@ See Promptfoo's [coding-agent guide](https://www.promptfoo.dev/docs/guides/evalu
 
 ### Grading code changes
 
-Promptfoo treats a coding agent's final message as its output, not the files it changed. When a suite needs deterministic checks of the implementation, an output transform captures the temporary workspace's changed-file list and Git diff before cleanup. Separate JavaScript assertions then grade specific requirements and report them as named Promptfoo metrics.
+Promptfoo's default is to grade the agent's final message, not the files it changed. We need to grade the code as well. A suite-specific output transform captures the changed-file list and Git diff before cleanup. Deterministic JavaScript assertions then grade that artifact as separate named Promptfoo metrics, while the raw diff remains available in the result.
 
-Keeping these assertions separate makes failures precise, while capturing the artifact once avoids repeated Git work. It also retains the raw diff in the Promptfoo result for later inspection. Promptfoo's built-in `agent-rubric` complements these exact checks by reviewing the live workspace for broader quality and correctness.
+Promptfoo's built-in `agent-rubric` complements these exact checks by reviewing the live workspace for broader quality and correctness.
 
 ## Setup
 
@@ -69,9 +69,8 @@ Results under `evals/results/` are gitignored and may contain source code and to
 ```text
 evals/
 ├── lib/
-│   ├── grading helpers
-│   ├── workspace lifecycle
-│   └── suite runner
+│   ├── run.sh                     suite runner
+│   └── workspace-extension.mjs    workspace lifecycle
 ├── package.json
 ├── package-lock.json
 └── suites/SUITE_NAME/

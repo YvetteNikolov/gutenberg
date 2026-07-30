@@ -32,8 +32,6 @@ import {
 	ComplementaryArea,
 	InterfaceSkeleton,
 	PinnedItems,
-	// No type declarations available for @wordpress/interface.
-	// @ts-expect-error
 } from '@wordpress/interface';
 import type { KeyboardEvent as ReactKeyboardEvent, ReactNode } from 'react';
 
@@ -125,6 +123,8 @@ function MediaEditorSidebar( { tabs }: { tabs: EditorTab[] } ) {
 			className="media-editor__sidebar"
 			panelClassName="media-editor__sidebar-panel"
 			headerClassName="media-editor__sidebar-header"
+			// @ts-expect-error @wordpress/interface currently narrows the
+			// default label to one literal. See the declaration follow-up in #80855.
 			closeLabel={ __( 'Close media panel' ) }
 			header={
 				<Tabs.List variant="minimal">
@@ -174,7 +174,11 @@ function HeaderActions( {
 					onClick={ () => setIsShortcutsModalOpen( true ) }
 				/>
 			) }
-			<PinnedItems.Slot scope="media-editor" />
+			{
+				// @ts-expect-error @wordpress/interface currently treats the
+				// optional className prop as required. See #80855.
+				<PinnedItems.Slot scope="media-editor" />
+			}
 			{ showCloseButton && (
 				<Button
 					size="compact"
@@ -593,45 +597,49 @@ function MediaEditorContent( {
 					}
 				>
 					<MediaEditorSidebar tabs={ tabs } />
-					<InterfaceSkeleton
-						className="media-editor__skeleton"
-						labels={ {
-							body: isImage
-								? __( 'Image editor' )
-								: __( 'Media preview' ),
-							sidebar: __( 'Media details' ),
-						} }
-						content={
-							<div className="media-editor__content">
-								<div className="media-editor__canvas-area">
-									{ isImage ? (
-										<MediaEditorCanvas
-											focusOnMount
-											isPlacementActive={
-												isPlacementActive
-											}
-											onGestureStart={
-												handleCanvasGestureStart
-											}
-											onGestureEnd={
-												handleCanvasGestureEnd
-											}
-										/>
-									) : (
-										<MediaPreview />
+					{
+						// @ts-expect-error @wordpress/interface currently treats
+						// optional skeleton slots as required. See #80855.
+						<InterfaceSkeleton
+							className="media-editor__skeleton"
+							labels={ {
+								body: isImage
+									? __( 'Image editor' )
+									: __( 'Media preview' ),
+								sidebar: __( 'Media details' ),
+							} }
+							content={
+								<div className="media-editor__content">
+									<div className="media-editor__canvas-area">
+										{ isImage ? (
+											<MediaEditorCanvas
+												focusOnMount
+												isPlacementActive={
+													isPlacementActive
+												}
+												onGestureStart={
+													handleCanvasGestureStart
+												}
+												onGestureEnd={
+													handleCanvasGestureEnd
+												}
+											/>
+										) : (
+											<MediaPreview />
+										) }
+									</div>
+									{ isImage && (
+										<div className="media-editor__canvas-toolbar">
+											{ ruler }
+										</div>
 									) }
 								</div>
-								{ isImage && (
-									<div className="media-editor__canvas-toolbar">
-										{ ruler }
-									</div>
-								) }
-							</div>
-						}
-						sidebar={
-							<ComplementaryArea.Slot scope="media-editor" />
-						}
-					/>
+							}
+							sidebar={
+								<ComplementaryArea.Slot scope="media-editor" />
+							}
+						/>
+					}
 				</Tabs.Root>
 			) }
 			<ConfirmDialog

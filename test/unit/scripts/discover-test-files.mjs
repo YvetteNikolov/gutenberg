@@ -103,9 +103,11 @@ export function getVitestTestsForProject( rootDir, manifest, projectName ) {
 	}
 
 	const project = manifest.vitest.projects[ projectName ];
+	const excludedFiles = new Set( project.excludedFiles ?? [] );
 	const directoryTests = discoveredTests.filter(
 		( testPath ) =>
 			! isBrowserTestPath( testPath ) &&
+			! excludedFiles.has( testPath ) &&
 			project.directories.some(
 				( directoryPath ) =>
 					testPath === directoryPath ||

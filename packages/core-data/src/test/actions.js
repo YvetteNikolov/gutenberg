@@ -1,9 +1,14 @@
 /**
+ * External dependencies
+ */
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
+/**
  * WordPress dependencies
  */
 import apiFetch from '@wordpress/api-fetch';
 
-jest.mock( '@wordpress/api-fetch' );
+vi.mock( '@wordpress/api-fetch' );
 
 /**
  * Internal dependencies
@@ -21,8 +26,8 @@ import {
 } from '../actions';
 import { getSyncManager } from '../sync';
 
-jest.mock( '../batch', () => {
-	const { createBatch } = jest.requireActual( '../batch' );
+vi.mock( import( '../batch' ), async ( importOriginal ) => {
+	const { createBatch } = await importOriginal();
 	return {
 		createBatch() {
 			return createBatch( ( inputs ) => Promise.resolve( inputs ) );
@@ -30,8 +35,8 @@ jest.mock( '../batch', () => {
 	};
 } );
 
-jest.mock( '../sync', () => ( {
-	getSyncManager: jest.fn(),
+vi.mock( '../sync', () => ( {
+	getSyncManager: vi.fn(),
 	CRDT_AUTOSAVE_SNAPSHOT_KEY: 'crdt_snapshot',
 	LOCAL_EDITOR_ORIGIN: 'local-editor',
 	LOCAL_UNDO_IGNORED_ORIGIN: 'local-undo-ignored',
@@ -45,7 +50,7 @@ describe( 'editEntityRecord', () => {
 			id: 'someId',
 		};
 		const select = {
-			getEntityConfig: jest.fn(),
+			getEntityConfig: vi.fn(),
 		};
 		const fulfillment = async () =>
 			editEntityRecord(
@@ -61,7 +66,7 @@ describe( 'editEntityRecord', () => {
 	} );
 
 	it( 'dispatches the correct action for non-merged edits', () => {
-		const dispatch = jest.fn();
+		const dispatch = vi.fn();
 		const select = {
 			getEntityConfig: () => ( {
 				kind: 'postType',
@@ -79,7 +84,7 @@ describe( 'editEntityRecord', () => {
 				content: 'Original Content',
 			} ),
 			getUndoManager: () => ( {
-				addRecord: jest.fn(),
+				addRecord: vi.fn(),
 			} ),
 		};
 
@@ -98,7 +103,7 @@ describe( 'editEntityRecord', () => {
 	} );
 
 	it( 'merges edits for fields defined in mergedEdits config', () => {
-		const dispatch = jest.fn();
+		const dispatch = vi.fn();
 		const select = {
 			getEntityConfig: () => ( {
 				kind: 'postType',
@@ -117,7 +122,7 @@ describe( 'editEntityRecord', () => {
 				},
 			} ),
 			getUndoManager: () => ( {
-				addRecord: jest.fn(),
+				addRecord: vi.fn(),
 			} ),
 		};
 
@@ -144,7 +149,7 @@ describe( 'editEntityRecord', () => {
 	} );
 
 	it( 'handles both merged and non-merged edits together', () => {
-		const dispatch = jest.fn();
+		const dispatch = vi.fn();
 		const select = {
 			getEntityConfig: () => ( {
 				kind: 'postType',
@@ -162,7 +167,7 @@ describe( 'editEntityRecord', () => {
 				meta: { existingKey: 'existingValue' },
 			} ),
 			getUndoManager: () => ( {
-				addRecord: jest.fn(),
+				addRecord: vi.fn(),
 			} ),
 		};
 
@@ -187,7 +192,7 @@ describe( 'editEntityRecord', () => {
 	} );
 
 	it( 'clears edit when merged value equals persisted record', () => {
-		const dispatch = jest.fn();
+		const dispatch = vi.fn();
 		const select = {
 			getEntityConfig: () => ( {
 				kind: 'postType',
@@ -203,7 +208,7 @@ describe( 'editEntityRecord', () => {
 				meta: { key1: 'value1' },
 			} ),
 			getUndoManager: () => ( {
-				addRecord: jest.fn(),
+				addRecord: vi.fn(),
 			} ),
 		};
 
@@ -225,7 +230,7 @@ describe( 'editEntityRecord', () => {
 	} );
 
 	it( 'clears non-merged edit when value equals persisted record', () => {
-		const dispatch = jest.fn();
+		const dispatch = vi.fn();
 		const select = {
 			getEntityConfig: () => ( {
 				kind: 'postType',
@@ -241,7 +246,7 @@ describe( 'editEntityRecord', () => {
 				title: 'Edited Title',
 			} ),
 			getUndoManager: () => ( {
-				addRecord: jest.fn(),
+				addRecord: vi.fn(),
 			} ),
 		};
 
@@ -267,7 +272,7 @@ describe( 'editEntityRecord', () => {
 		beforeEach( () => {
 			// Create a mock sync manager
 			syncManager = {
-				update: jest.fn(),
+				update: vi.fn(),
 			};
 			getSyncManager.mockReturnValue( syncManager );
 		} );
@@ -277,7 +282,7 @@ describe( 'editEntityRecord', () => {
 		} );
 
 		it( 'passes merged edits to SyncManager#update for merged fields', () => {
-			const dispatch = jest.fn();
+			const dispatch = vi.fn();
 			const select = {
 				getEntityConfig: () => ( {
 					kind: 'postType',
@@ -297,7 +302,7 @@ describe( 'editEntityRecord', () => {
 					},
 				} ),
 				getUndoManager: () => ( {
-					addRecord: jest.fn(),
+					addRecord: vi.fn(),
 				} ),
 			};
 
@@ -325,7 +330,7 @@ describe( 'editEntityRecord', () => {
 		} );
 
 		it( 'passes merged edits to SyncManager#update even when value equals persisted record', () => {
-			const dispatch = jest.fn();
+			const dispatch = vi.fn();
 			const select = {
 				getEntityConfig: () => ( {
 					kind: 'postType',
@@ -342,7 +347,7 @@ describe( 'editEntityRecord', () => {
 					meta: { key1: 'value1' },
 				} ),
 				getUndoManager: () => ( {
-					addRecord: jest.fn(),
+					addRecord: vi.fn(),
 				} ),
 			};
 
@@ -378,7 +383,7 @@ describe( 'editEntityRecord', () => {
 		} );
 
 		it( 'passes merged and non-merged edits correctly to SyncManager#update', () => {
-			const dispatch = jest.fn();
+			const dispatch = vi.fn();
 			const select = {
 				getEntityConfig: () => ( {
 					kind: 'postType',
@@ -397,7 +402,7 @@ describe( 'editEntityRecord', () => {
 					meta: { existingKey: 'existingValue' },
 				} ),
 				getUndoManager: () => ( {
-					addRecord: jest.fn(),
+					addRecord: vi.fn(),
 				} ),
 			};
 
@@ -423,7 +428,7 @@ describe( 'editEntityRecord', () => {
 		} );
 
 		it( 'does not call SyncManager#update when syncConfig is not defined', () => {
-			const dispatch = jest.fn();
+			const dispatch = vi.fn();
 			const select = {
 				getEntityConfig: () => ( {
 					kind: 'postType',
@@ -440,7 +445,7 @@ describe( 'editEntityRecord', () => {
 					meta: { existingKey: 'existingValue' },
 				} ),
 				getUndoManager: () => ( {
-					addRecord: jest.fn(),
+					addRecord: vi.fn(),
 				} ),
 			};
 
@@ -460,7 +465,7 @@ describe( 'editEntityRecord', () => {
 describe( 'clearEntityRecordEdits', () => {
 	it( 'throws when the entity does not have a loaded config.', async () => {
 		const select = {
-			getEntityConfig: jest.fn(),
+			getEntityConfig: vi.fn(),
 		};
 		const fulfillment = async () =>
 			clearEntityRecordEdits(
@@ -474,7 +479,7 @@ describe( 'clearEntityRecordEdits', () => {
 	} );
 
 	it( 'does nothing when there are no edits', () => {
-		const dispatch = jest.fn();
+		const dispatch = vi.fn();
 		const select = {
 			getEntityConfig: () => ( {
 				kind: 'postType',
@@ -496,7 +501,7 @@ describe( 'clearEntityRecordEdits', () => {
 	} );
 
 	it( 'clears all edits for an entity record', () => {
-		const dispatch = jest.fn();
+		const dispatch = vi.fn();
 		const select = {
 			getEntityConfig: () => ( {
 				kind: 'postType',
@@ -546,12 +551,12 @@ describe( 'deleteEntityRecord', () => {
 			{ name: 'post', kind: 'postType', baseURL: '/wp/v2/posts' },
 		];
 
-		const dispatch = Object.assign( jest.fn(), {
-			receiveEntityRecords: jest.fn(),
-			__unstableAcquireStoreLock: jest.fn(),
-			__unstableReleaseStoreLock: jest.fn(),
+		const dispatch = Object.assign( vi.fn(), {
+			receiveEntityRecords: vi.fn(),
+			__unstableAcquireStoreLock: vi.fn(),
+			__unstableReleaseStoreLock: vi.fn(),
 		} );
-		const resolveSelect = { getEntitiesConfig: jest.fn( () => configs ) };
+		const resolveSelect = { getEntitiesConfig: vi.fn( () => configs ) };
 
 		// Provide response
 		apiFetch.mockImplementation( () => deletedRecord );
@@ -597,12 +602,12 @@ describe( 'deleteEntityRecord', () => {
 			{ name: 'post', kind: 'postType', baseURL: '/wp/v2/posts' },
 		];
 
-		const dispatch = Object.assign( jest.fn(), {
-			receiveEntityRecords: jest.fn(),
-			__unstableAcquireStoreLock: jest.fn(),
-			__unstableReleaseStoreLock: jest.fn(),
+		const dispatch = Object.assign( vi.fn(), {
+			receiveEntityRecords: vi.fn(),
+			__unstableAcquireStoreLock: vi.fn(),
+			__unstableReleaseStoreLock: vi.fn(),
 		} );
-		const resolveSelect = { getEntitiesConfig: jest.fn( () => entities ) };
+		const resolveSelect = { getEntitiesConfig: vi.fn( () => entities ) };
 
 		// Provide response
 		apiFetch.mockImplementation( () => {
@@ -627,12 +632,12 @@ describe( 'deleteEntityRecord', () => {
 			{ name: 'post', kind: 'postType', baseURL: '/wp/v2/posts' },
 		];
 
-		const dispatch = Object.assign( jest.fn(), {
-			receiveEntityRecords: jest.fn(),
-			__unstableAcquireStoreLock: jest.fn(),
-			__unstableReleaseStoreLock: jest.fn(),
+		const dispatch = Object.assign( vi.fn(), {
+			receiveEntityRecords: vi.fn(),
+			__unstableAcquireStoreLock: vi.fn(),
+			__unstableReleaseStoreLock: vi.fn(),
 		} );
-		const resolveSelect = { getEntitiesConfig: jest.fn( () => entities ) };
+		const resolveSelect = { getEntitiesConfig: vi.fn( () => entities ) };
 
 		// Provide response
 		apiFetch.mockImplementation( () => {
@@ -672,10 +677,10 @@ describe( 'saveEditedEntityRecord', () => {
 			hasEditsForEntityRecord: () => true,
 		};
 
-		const dispatch = Object.assign( jest.fn(), {
-			saveEntityRecord: jest.fn(),
+		const dispatch = Object.assign( vi.fn(), {
+			saveEntityRecord: vi.fn(),
 		} );
-		const resolveSelect = { getEntitiesConfig: jest.fn( () => configs ) };
+		const resolveSelect = { getEntitiesConfig: vi.fn( () => configs ) };
 
 		// Provide response
 		const updatedRecord = { ...item, menu: 10 };
@@ -712,10 +717,10 @@ describe( 'saveEditedEntityRecord', () => {
 			hasEditsForEntityRecord: () => true,
 		};
 
-		const dispatch = Object.assign( jest.fn(), {
-			saveEntityRecord: jest.fn(),
+		const dispatch = Object.assign( vi.fn(), {
+			saveEntityRecord: vi.fn(),
 		} );
-		const resolveSelect = { getEntitiesConfig: jest.fn( () => configs ) };
+		const resolveSelect = { getEntitiesConfig: vi.fn( () => configs ) };
 
 		// Provide response
 		const updatedRecord = { ...item, menu: 10 };
@@ -743,10 +748,10 @@ describe( 'saveEntityRecord', () => {
 
 	beforeEach( async () => {
 		apiFetch.mockReset();
-		dispatch = Object.assign( jest.fn(), {
-			receiveEntityRecords: jest.fn(),
-			__unstableAcquireStoreLock: jest.fn(),
-			__unstableReleaseStoreLock: jest.fn(),
+		dispatch = Object.assign( vi.fn(), {
+			receiveEntityRecords: vi.fn(),
+			__unstableAcquireStoreLock: vi.fn(),
+			__unstableReleaseStoreLock: vi.fn(),
 		} );
 	} );
 
@@ -758,7 +763,7 @@ describe( 'saveEntityRecord', () => {
 		const select = {
 			getRawEntityRecord: () => post,
 		};
-		const resolveSelect = { getEntitiesConfig: jest.fn( () => configs ) };
+		const resolveSelect = { getEntitiesConfig: vi.fn( () => configs ) };
 
 		// Provide response
 		const updatedRecord = { ...post, id: 10 };
@@ -823,7 +828,7 @@ describe( 'saveEntityRecord', () => {
 		const select = {
 			getRawEntityRecord: () => post,
 		};
-		const resolveSelect = { getEntitiesConfig: jest.fn( () => entities ) };
+		const resolveSelect = { getEntitiesConfig: vi.fn( () => entities ) };
 
 		// Provide response
 		apiFetch.mockImplementation( () => {
@@ -845,7 +850,7 @@ describe( 'saveEntityRecord', () => {
 		const select = {
 			getRawEntityRecord: () => post,
 		};
-		const resolveSelect = { getEntitiesConfig: jest.fn( () => entities ) };
+		const resolveSelect = { getEntitiesConfig: vi.fn( () => entities ) };
 
 		// Provide response
 		apiFetch.mockImplementation( () => {
@@ -867,7 +872,7 @@ describe( 'saveEntityRecord', () => {
 		const select = {
 			getRawEntityRecord: () => post,
 		};
-		const resolveSelect = { getEntitiesConfig: jest.fn( () => configs ) };
+		const resolveSelect = { getEntitiesConfig: vi.fn( () => configs ) };
 
 		// Provide response
 		const updatedRecord = { ...post, id: 10 };
@@ -939,7 +944,7 @@ describe( 'saveEntityRecord', () => {
 			},
 		];
 		const syncManager = {
-			update: jest.fn(
+			update: vi.fn(
 				( _objectType, _objectId, changes, _origin, options ) => {
 					if (
 						Object.prototype.hasOwnProperty.call( changes, 'title' )
@@ -955,7 +960,7 @@ describe( 'saveEntityRecord', () => {
 		const select = {
 			getRawEntityRecord: () => post,
 		};
-		const resolveSelect = { getEntitiesConfig: jest.fn( () => configs ) };
+		const resolveSelect = { getEntitiesConfig: vi.fn( () => configs ) };
 
 		const staleSaveResponse = { ...post, title: 'initial title' };
 		apiFetch.mockImplementation( () => {
@@ -1003,12 +1008,12 @@ describe( 'saveEntityRecord', () => {
 			},
 		];
 		const syncManager = {
-			update: jest.fn(),
+			update: vi.fn(),
 		};
 		const select = {
 			getRawEntityRecord: () => persistedRecord,
 		};
-		const resolveSelect = { getEntitiesConfig: jest.fn( () => configs ) };
+		const resolveSelect = { getEntitiesConfig: vi.fn( () => configs ) };
 		const updatedRecord = {
 			...persistedRecord,
 			content: edits.content,
@@ -1069,12 +1074,12 @@ describe( 'saveEntityRecord', () => {
 			},
 		];
 		const syncManager = {
-			update: jest.fn(),
+			update: vi.fn(),
 		};
 		const select = {
 			getRawEntityRecord: () => persistedRecord,
 		};
-		const resolveSelect = { getEntitiesConfig: jest.fn( () => configs ) };
+		const resolveSelect = { getEntitiesConfig: vi.fn( () => configs ) };
 		const updatedRecord = {
 			...persistedRecord,
 			content: edits.content,
@@ -1138,12 +1143,12 @@ describe( 'saveEntityRecord', () => {
 			},
 		];
 		const syncManager = {
-			update: jest.fn(),
+			update: vi.fn(),
 		};
 		const select = {
 			getRawEntityRecord: () => persistedRecord,
 		};
-		const resolveSelect = { getEntitiesConfig: jest.fn( () => configs ) };
+		const resolveSelect = { getEntitiesConfig: vi.fn( () => configs ) };
 		const updatedRecord = {
 			id: 10,
 			meta: {
@@ -1199,9 +1204,9 @@ describe( 'saveEntityRecord', () => {
 			template: 'page-no-title',
 		};
 		const syncManager = {
-			update: jest.fn(),
+			update: vi.fn(),
 		};
-		const prePersist = jest.fn( async () => {
+		const prePersist = vi.fn( async () => {
 			expect( syncManager.update ).toHaveBeenCalledTimes( 1 );
 			expect( syncManager.update ).toHaveBeenLastCalledWith(
 				'postType/page',
@@ -1224,7 +1229,7 @@ describe( 'saveEntityRecord', () => {
 		const select = {
 			getRawEntityRecord: () => persistedRecord,
 		};
-		const resolveSelect = { getEntitiesConfig: jest.fn( () => configs ) };
+		const resolveSelect = { getEntitiesConfig: vi.fn( () => configs ) };
 		const updatedRecord = {
 			...persistedRecord,
 			...edits,
@@ -1275,12 +1280,12 @@ describe( 'saveEntityRecord', () => {
 			},
 		];
 		const syncManager = {
-			update: jest.fn(),
+			update: vi.fn(),
 		};
 		const select = {
 			getRawEntityRecord: () => persistedRecord,
 		};
-		const resolveSelect = { getEntitiesConfig: jest.fn( () => configs ) };
+		const resolveSelect = { getEntitiesConfig: vi.fn( () => configs ) };
 		const error = new Error( 'API error' );
 		apiFetch.mockRejectedValue( error );
 		getSyncManager.mockReturnValue( syncManager );
@@ -1318,12 +1323,12 @@ describe( 'saveEntityRecord', () => {
 			},
 		];
 		const syncManager = {
-			update: jest.fn(),
+			update: vi.fn(),
 		};
 		const select = {
 			getRawEntityRecord: () => persistedRecord,
 		};
-		const resolveSelect = { getEntitiesConfig: jest.fn( () => configs ) };
+		const resolveSelect = { getEntitiesConfig: vi.fn( () => configs ) };
 		const updatedRecord = {
 			id: 10,
 			slug: 'needs-normalizing',
@@ -1375,12 +1380,12 @@ describe( 'saveEntityRecord', () => {
 			},
 		];
 		const syncManager = {
-			update: jest.fn(),
+			update: vi.fn(),
 		};
 		const select = {
 			getRawEntityRecord: () => persistedRecord,
 		};
-		const resolveSelect = { getEntitiesConfig: jest.fn( () => configs ) };
+		const resolveSelect = { getEntitiesConfig: vi.fn( () => configs ) };
 		const updatedRecord = {
 			id: 10,
 			title: { raw: 'Initial title', rendered: 'Initial title' },
@@ -1433,12 +1438,12 @@ describe( 'saveEntityRecord', () => {
 			},
 		];
 		const syncManager = {
-			update: jest.fn(),
+			update: vi.fn(),
 		};
 		const select = {
 			getRawEntityRecord: () => persistedRecord,
 		};
-		const resolveSelect = { getEntitiesConfig: jest.fn( () => configs ) };
+		const resolveSelect = { getEntitiesConfig: vi.fn( () => configs ) };
 		const updatedRecord = {
 			id: 10,
 			content: {
@@ -1488,12 +1493,12 @@ describe( 'saveEntityRecord', () => {
 			},
 		];
 		const syncManager = {
-			update: jest.fn(),
+			update: vi.fn(),
 		};
 		const select = {
 			getRawEntityRecord: () => persistedRecord,
 		};
-		const resolveSelect = { getEntitiesConfig: jest.fn( () => configs ) };
+		const resolveSelect = { getEntitiesConfig: vi.fn( () => configs ) };
 		// The server strips disallowed markup from the sent content.
 		const updatedRecord = {
 			id: 10,
@@ -1537,12 +1542,12 @@ describe( 'saveEntityRecord', () => {
 			},
 		];
 		const syncManager = {
-			update: jest.fn(),
+			update: vi.fn(),
 		};
 		const select = {
 			getRawEntityRecord: () => undefined,
 		};
-		const resolveSelect = { getEntitiesConfig: jest.fn( () => configs ) };
+		const resolveSelect = { getEntitiesConfig: vi.fn( () => configs ) };
 		const updatedRecord = {
 			id: 10,
 			content: 'Updated content',
@@ -1581,7 +1586,7 @@ describe( 'saveEntityRecord', () => {
 		const select = {
 			getRawEntityRecord: () => ( {} ),
 		};
-		const resolveSelect = { getEntitiesConfig: jest.fn( () => configs ) };
+		const resolveSelect = { getEntitiesConfig: vi.fn( () => configs ) };
 
 		// Provide response
 		apiFetch.mockImplementation( () => postType );
@@ -1646,13 +1651,13 @@ describe( 'saveEntityRecord', () => {
 		let syncManager;
 
 		beforeEach( () => {
-			dispatch.receiveAutosaves = jest.fn();
+			dispatch.receiveAutosaves = vi.fn();
 			select = {
 				getRawEntityRecord: () => persistedRecord,
 			};
 			syncManager = {
-				getEntitySnapshot: jest.fn( () => 'ENCODED_SNAPSHOT' ),
-				update: jest.fn(),
+				getEntitySnapshot: vi.fn( () => 'ENCODED_SNAPSHOT' ),
+				update: vi.fn(),
 			};
 			getSyncManager.mockReturnValue( syncManager );
 			apiFetch.mockImplementation( () => ( {
@@ -1669,7 +1674,7 @@ describe( 'saveEntityRecord', () => {
 
 		function makeResolveSelect( entityConfig ) {
 			return {
-				getEntitiesConfig: jest.fn( () => [ entityConfig ] ),
+				getEntitiesConfig: vi.fn( () => [ entityConfig ] ),
 			};
 		}
 
@@ -1778,7 +1783,7 @@ describe( 'saveEntityRecord', () => {
 			// without this content and wrongly suppress the recovery
 			// notice on reload.
 			const callOrder = [];
-			syncManager.update = jest.fn( () => {
+			syncManager.update = vi.fn( () => {
 				callOrder.push( 'update' );
 			} );
 			syncManager.getEntitySnapshot.mockImplementation( () => {
@@ -1862,19 +1867,19 @@ describe( 'receiveCurrentUser', () => {
 describe( '__experimentalBatch', () => {
 	it( 'batches multiple actions together', async () => {
 		const dispatch = {
-			saveEntityRecord: jest.fn(
+			saveEntityRecord: vi.fn(
 				( kind, name, record, { __unstableFetch } ) => {
 					__unstableFetch( {} );
 					return { id: 123, created: true };
 				}
 			),
-			saveEditedEntityRecord: jest.fn(
+			saveEditedEntityRecord: vi.fn(
 				( kind, name, recordId, { __unstableFetch } ) => {
 					__unstableFetch( {} );
 					return { id: 123, updated: true };
 				}
 			),
-			deleteEntityRecord: jest.fn(
+			deleteEntityRecord: vi.fn(
 				( kind, name, recordId, query, { __unstableFetch } ) => {
 					__unstableFetch( {} );
 					return { id: 123, deleted: true };

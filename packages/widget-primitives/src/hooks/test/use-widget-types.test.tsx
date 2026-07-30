@@ -1,6 +1,7 @@
 /**
  * External dependencies
  */
+import { afterEach, describe, expect, it } from 'vitest';
 import { renderHook, waitFor } from '@testing-library/react';
 
 /**
@@ -18,50 +19,15 @@ import {
 } from '../../icon-resolver';
 import { useWidgetTypes } from '../use-widget-types';
 import type { WidgetIcon, WidgetModuleRecord } from '../../types';
+import { moduleIcon as mockModuleIcon } from './fixtures/widget-module.mjs';
 
 const LocationControl = () => null;
-
-const mockModuleIcon = createElement( 'svg', {
-	viewBox: '0 0 24 24',
-} ) as WidgetIcon;
-
-jest.mock(
-	'test-widget/widget-module',
-	() => ( {
-		__esModule: true,
-		default: {
-			apiVersion: 1,
-			title: 'Store',
-			icon: mockModuleIcon,
-			attributes: [
-				{
-					id: 'location',
-					label: 'Location',
-					type: 'test/location',
-				},
-				{ id: 'label', label: 'Label', type: 'text' },
-			],
-		},
-	} ),
-	{ virtual: true }
-);
-
-jest.mock(
-	'test-widget/string-icon-module',
-	() => ( {
-		__esModule: true,
-		default: {
-			title: 'String icon',
-			icon: 'wordpress',
-		},
-	} ),
-	{ virtual: true }
-);
 
 const records: WidgetModuleRecord[] = [
 	{
 		name: 'test/store',
-		widget_module: 'test-widget/widget-module',
+		widget_module:
+			'/packages/widget-primitives/src/hooks/test/fixtures/widget-module.mjs',
 		render_module: 'test-widget/render-module',
 	},
 ];
@@ -73,7 +39,8 @@ const iconReferenceRecords: WidgetModuleRecord[] = [
 const stringIconRecords: WidgetModuleRecord[] = [
 	{
 		name: 'test/string-icon',
-		widget_module: 'test-widget/string-icon-module',
+		widget_module:
+			'/packages/widget-primitives/src/hooks/test/fixtures/string-icon-module.mjs',
 		render_module: 'test-widget/render-module',
 	},
 ];

@@ -5,10 +5,11 @@ import {
 	describe,
 	expect,
 	it,
-	jest,
+	vi,
 	beforeEach,
 	afterEach,
-} from '@jest/globals';
+	type MockInstance,
+} from 'vitest';
 
 /**
  * Internal dependencies
@@ -17,10 +18,10 @@ import { logPerformanceTiming, passThru } from '../performance';
 
 describe( 'performance utilities', () => {
 	describe( 'logPerformanceTiming', () => {
-		let consoleSpy: jest.SpiedFunction< typeof console.log >;
+		let consoleSpy: MockInstance< typeof console.log >;
 
 		beforeEach( () => {
-			consoleSpy = jest
+			consoleSpy = vi
 				.spyOn( console, 'log' )
 				.mockImplementation( () => {} );
 		} );
@@ -53,7 +54,7 @@ describe( 'performance utilities', () => {
 		} );
 
 		it( 'passes all arguments to the wrapped function', () => {
-			const fn = jest.fn( ( a: number, b: string, c: boolean ) => {
+			const fn = vi.fn( ( a: number, b: string, c: boolean ) => {
 				return `${ a }-${ b }-${ c }`;
 			} );
 
@@ -112,7 +113,7 @@ describe( 'performance utilities', () => {
 
 	describe( 'passThru', () => {
 		it( 'returns a function that calls the original function', () => {
-			const fn = jest.fn( () => 'result' );
+			const fn = vi.fn( () => 'result' );
 
 			const wrapped = passThru( fn );
 			const result = wrapped();
@@ -122,7 +123,7 @@ describe( 'performance utilities', () => {
 		} );
 
 		it( 'passes all arguments to the original function', () => {
-			const fn = jest.fn( ( a: number, b: string ) => `${ a }-${ b }` );
+			const fn = vi.fn( ( a: number, b: string ) => `${ a }-${ b }` );
 
 			const wrapped = passThru( fn );
 			const result = wrapped( 42, 'test' );

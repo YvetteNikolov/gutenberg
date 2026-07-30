@@ -20,6 +20,10 @@ import { unlock } from '../../../lock-unlock';
 // @ts-ignore
 import { store as editorStore } from '../../../store';
 
+// @ts-expect-error @wordpress/block-editor does not publish the compound
+// BlockPreview.Async type yet. See the type-declaration follow-up in #80855.
+const AsyncBlockPreview = BlockPreview.Async;
+
 function PostPreviewContainer( {
 	template,
 	post,
@@ -53,9 +57,13 @@ function PostPreviewContainer( {
 				</span>
 			) }
 			{ ! isEmpty && (
-				<BlockPreview.Async>
-					<BlockPreview blocks={ blocks } />
-				</BlockPreview.Async>
+				<AsyncBlockPreview>
+					{
+						// @ts-expect-error @wordpress/block-editor currently
+						// treats optional BlockPreview props as required. See #80855.
+						<BlockPreview blocks={ blocks } />
+					}
+				</AsyncBlockPreview>
 			) }
 		</div>
 	);

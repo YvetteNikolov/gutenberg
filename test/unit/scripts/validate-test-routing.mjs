@@ -114,6 +114,7 @@ assert.deepEqual(
 	[
 		...manifest.vitest.projects.browser.files,
 		...manifest.vitest.projects.browser.directories,
+		...manifest.vitest.projects.browser.excludedFiles,
 	],
 	[],
 	'Browser Mode ownership is derived from *.browser.test.* filenames, not manifest entries.'
@@ -142,6 +143,10 @@ for ( const projectName of VITEST_PROJECT_NAMES ) {
 		`vitest.projects.${ projectName }.directories`,
 		manifest.vitest.projects[ projectName ].directories
 	);
+	assertUniquePaths(
+		`vitest.projects.${ projectName }.excludedFiles`,
+		manifest.vitest.projects[ projectName ].excludedFiles
+	);
 }
 
 const expectedVitestTestsByProject = getVitestTestsByProject(
@@ -165,6 +170,11 @@ const migratedTestFiles = Object.values( manifest.vitest.projects ).flatMap(
 const migratedDirectories = Object.values( manifest.vitest.projects ).flatMap(
 	( project ) => project.directories
 );
+const excludedProjectFiles = Object.values( manifest.vitest.projects ).flatMap(
+	( project ) => project.excludedFiles
+);
+assertUniquePaths( 'Vitest project exclusions', excludedProjectFiles );
+
 const invalidMigratedEntries = [
 	...migratedTestFiles.filter(
 		( testPath ) => ! existsSync( path.join( ROOT_DIR, testPath ) )
@@ -173,11 +183,39 @@ const invalidMigratedEntries = [
 		( directoryPath ) =>
 			! existsSync( path.join( ROOT_DIR, directoryPath ) )
 	),
+	...excludedProjectFiles.filter(
+		( testPath ) => ! existsSync( path.join( ROOT_DIR, testPath ) )
+	),
 ];
 assert.deepEqual(
 	invalidMigratedEntries,
 	[],
-	`Migrated files or directories do not exist:\n${ invalidMigratedEntries.join(
+	`Migrated files, directories, or project exclusions do not exist:\n${ invalidMigratedEntries.join(
+		'\n'
+	) }`
+);
+
+const invalidProjectExclusions = VITEST_PROJECT_NAMES.flatMap(
+	( projectName ) => {
+		const project = manifest.vitest.projects[ projectName ];
+		return project.excludedFiles
+			.filter( ( testPath ) => {
+				const selectedByDirectory = project.directories.some(
+					( directoryPath ) =>
+						testPath === directoryPath ||
+						testPath.startsWith( `${ directoryPath }/` )
+				);
+				return (
+					! selectedByDirectory || project.files.includes( testPath )
+				);
+			} )
+			.map( ( testPath ) => `${ projectName }: ${ testPath }` );
+	}
+);
+assert.deepEqual(
+	invalidProjectExclusions,
+	[],
+	`Vitest project exclusions must select only tests inherited from that project's directories:\n${ invalidProjectExclusions.join(
 		'\n'
 	) }`
 );

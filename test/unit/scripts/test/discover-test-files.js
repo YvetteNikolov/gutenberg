@@ -1,4 +1,11 @@
 /**
+ * Node dependencies
+ */
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import path from 'node:path';
+
+/**
  * External dependencies
  */
 import { describe, expect, test } from 'vitest';
@@ -9,6 +16,7 @@ import { describe, expect, test } from 'vitest';
 import {
 	assertVitestProjectNames,
 	findOverlappingVitestProjectTests,
+	getVitestTestsForProject,
 	isBrowserTestPath,
 } from '../discover-test-files.mjs';
 import {
@@ -77,6 +85,41 @@ describe( 'Vitest project routing', () => {
 		expect(
 			isBrowserTestPath( 'packages/components/src/button/test/index.tsx' )
 		).toBe( false );
+	} );
+
+	test( 'excludes directory tests routed to another project', () => {
+		const rootDir = mkdtempSync(
+			path.join( tmpdir(), 'gutenberg-vitest-routing-' )
+		);
+		const testDirectory = path.join( rootDir, 'packages/example/src/test' );
+
+		try {
+			mkdirSync( testDirectory, { recursive: true } );
+			writeFileSync( path.join( testDirectory, 'node.test.js' ), '' );
+			writeFileSync( path.join( testDirectory, 'jsdom.test.js' ), '' );
+
+			expect(
+				getVitestTestsForProject(
+					rootDir,
+					{
+						vitest: {
+							projects: {
+								jsdom: {
+									files: [],
+									directories: [ 'packages/example' ],
+									excludedFiles: [
+										'packages/example/src/test/node.test.js',
+									],
+								},
+							},
+						},
+					},
+					'jsdom'
+				)
+			).toEqual( [ 'packages/example/src/test/jsdom.test.js' ] );
+		} finally {
+			rmSync( rootDir, { recursive: true } );
+		}
 	} );
 
 	test( 'detects Browser Mode imports', () => {

@@ -31,6 +31,10 @@ const testMigration = JSON.parse(
 const vitestTests = getVitestTestsByProject( ROOT_DIR, testMigration );
 const { sync: glob } = globPackage;
 const reporters = [ 'default' ];
+const styleMockAlias = {
+	find: /^.*\.(?:css|scss)$/,
+	replacement: path.join( ROOT_DIR, 'test/unit/config/style-mock.vitest.js' ),
+};
 
 if ( process.env.GITHUB_ACTIONS === 'true' ) {
 	reporters.push( 'github-actions' );
@@ -107,13 +111,6 @@ export default defineConfig( {
 	resolve: {
 		alias: [
 			{
-				find: /^.*\.(?:css|scss)$/,
-				replacement: path.join(
-					ROOT_DIR,
-					'test/unit/config/style-mock.vitest.js'
-				),
-			},
-			{
 				find: /^yargs$/,
 				replacement: path.join(
 					ROOT_DIR,
@@ -183,12 +180,74 @@ export default defineConfig( {
 					entries: vitestTests.browser,
 					// Babel injects the automatic JSX runtime after Vite's
 					// dependency scan, so declare it directly.
-					include: [ 'react/jsx-runtime' ],
+					include: [
+						'@base-ui/react',
+						'@base-ui/react/alert-dialog',
+						'@base-ui/react/autocomplete',
+						'@base-ui/react/button',
+						'@base-ui/react/checkbox',
+						'@base-ui/react/collapsible',
+						'@base-ui/react/combobox',
+						'@base-ui/react/dialog',
+						'@base-ui/react/drawer',
+						'@base-ui/react/field',
+						'@base-ui/react/fieldset',
+						'@base-ui/react/input',
+						'@base-ui/react/popover',
+						'@base-ui/react/select',
+						'@base-ui/react/tabs',
+						'@base-ui/react/tooltip',
+						'@date-fns/utc',
+						'@emotion/cache',
+						'@emotion/styled/base',
+						'@floating-ui/react-dom',
+						'@testing-library/jest-dom/vitest',
+						'@testing-library/react',
+						'@use-gesture/react',
+						'@wordpress/components > react-colorful',
+						'colord/plugins/a11y',
+						'colorjs.io/fn',
+						'date-fns',
+						'deepmerge',
+						'equivalent-key-map',
+						'fast-deep-equal/es6/index.js',
+						'gradient-parser',
+						'highlight-words-core',
+						'is-promise',
+						'moment',
+						'moment-timezone/moment-timezone-utils.js',
+						'moment-timezone/moment-timezone.js',
+						'path-to-regexp',
+						're-resizable',
+						'react-day-picker',
+						'react-day-picker/locale',
+						'react/jsx-runtime',
+						'rememo',
+						'remove-accents',
+						'redux',
+						'rungen',
+						'tabbable',
+						'uuid',
+					],
 				},
 				test: {
 					name: 'browser',
 					attachmentsDir: 'test-results/vitest-browser-attachments',
 					include: vitestTests.browser,
+					setupFiles: [
+						path.join(
+							ROOT_DIR,
+							'test/unit/config/browser.vitest.js'
+						),
+						path.join(
+							ROOT_DIR,
+							'test/unit/config/gutenberg-env.js'
+						),
+						path.join(
+							ROOT_DIR,
+							'test/unit/config/console.vitest.js'
+						),
+					],
 					browser: {
 						enabled: true,
 						headless: true,
@@ -206,6 +265,9 @@ export default defineConfig( {
 			},
 			{
 				extends: true,
+				resolve: {
+					alias: [ styleMockAlias ],
+				},
 				test: {
 					// The Flakiness.io reporter uses the project name as part
 					// of its environment identity. Preserve the historical
@@ -249,6 +311,9 @@ export default defineConfig( {
 			},
 			{
 				extends: true,
+				resolve: {
+					alias: [ styleMockAlias ],
+				},
 				test: {
 					name: 'node',
 					environment: 'node',

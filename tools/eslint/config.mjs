@@ -40,6 +40,7 @@ const vitestTestPatterns = [
 		),
 	] ),
 ];
+const vitestBrowserTestPatterns = getVitestProjectPatterns( 'browser' );
 const vitestJsdomTestPatterns = getVitestProjectPatterns( 'jsdom' );
 const vitestJsdomTestIgnores =
 	testMigration.vitest.projects.jsdom.excludedFiles;
@@ -474,6 +475,25 @@ export default dedupePlugins( [
 		...testingLibraryPlugin.configs[ 'flat/react' ],
 		files: vitestJsdomTestPatterns,
 		ignores: vitestJsdomTestIgnores,
+	},
+	{
+		...jestDomPlugin.configs[ 'flat/recommended' ],
+		files: vitestBrowserTestPatterns,
+	},
+	{
+		...testingLibraryPlugin.configs[ 'flat/react' ],
+		files: vitestBrowserTestPatterns,
+		settings: {
+			'testing-library/utils-module': 'off',
+			'testing-library/custom-renders': 'off',
+			'testing-library/custom-queries': 'off',
+		},
+		rules: {
+			...testingLibraryPlugin.configs[ 'flat/react' ].rules,
+			// vitest-browser-react returns Browser Mode locators from render().
+			// Those scoped queries are the browser-native alternative to screen.
+			'testing-library/prefer-screen-queries': 'off',
+		},
 	},
 
 	// Override: Jest test files (unit tests).

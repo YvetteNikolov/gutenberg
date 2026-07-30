@@ -4,7 +4,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, render, renderHook, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { click, render as renderAriakit } from '@ariakit/test/react';
 
 /**
  * Internal dependencies
@@ -753,8 +752,8 @@ const DUPLICATE_PALETTE_SETTINGS = {
 };
 
 // Helper: open the text Color dropdown and return the rendered swatches.
-async function openTextColorDropdown() {
-	await click(
+async function openTextColorDropdown( user ) {
+	await user.click(
 		screen.getByRole( 'button', { name: /Color/, expanded: false } )
 	);
 	// `findAllByRole` waits for the Popover/portal content to appear.
@@ -764,8 +763,9 @@ async function openTextColorDropdown() {
 describe( 'TypographyPanel — duplicate-hex preset slug identity', () => {
 	it( 'commits the inherited preset slug when accepting the preselected inherited color', async () => {
 		const onChange = vi.fn();
+		const user = userEvent.setup();
 
-		await renderAriakit(
+		await render(
 			<TypographyPanel
 				value={ {} }
 				inheritedValue={ {
@@ -777,19 +777,20 @@ describe( 'TypographyPanel — duplicate-hex preset slug identity', () => {
 			/>
 		);
 
-		const swatches = await openTextColorDropdown();
+		const swatches = await openTextColorDropdown( user );
 		// swatch[1] ('Dark Text') is the preselected inherited option;
 		// activating it is the "accept inherited value" gesture. The commit
 		// must carry the inherited slug, not re-encode the shared #000 hex
 		// to whichever duplicate appears first in the palette.
-		await click( swatches[ 1 ] );
+		await user.click( swatches[ 1 ] );
 
 		const result = onChange.mock.calls[ 0 ][ 0 ];
 		expect( result?.color?.text ).toBe( 'var:preset|color|dark-text' );
 	} );
 
 	it( 'marks only the local preset as selected when another preset shares its hex', async () => {
-		await renderAriakit(
+		const user = userEvent.setup();
+		await render(
 			<TypographyPanel
 				value={ { color: { text: 'var:preset|color|dark-text' } } }
 				settings={ DUPLICATE_PALETTE_SETTINGS }
@@ -800,7 +801,7 @@ describe( 'TypographyPanel — duplicate-hex preset slug identity', () => {
 
 		// swatch[0] = 'Dark Background', swatch[1] = 'Dark Text'. Selection
 		// must follow the stored slug; matching by hex would mark both.
-		const swatches = await openTextColorDropdown();
+		const swatches = await openTextColorDropdown( user );
 		expect( swatches[ 1 ] ).toHaveAttribute( 'aria-selected', 'true' );
 		expect( swatches[ 0 ] ).toHaveAttribute( 'aria-selected', 'false' );
 	} );
@@ -809,9 +810,10 @@ describe( 'TypographyPanel — duplicate-hex preset slug identity', () => {
 describe( 'TypographyPanel — setTextColor link sync', () => {
 	it( 'syncs the link color when text and link share the same raw preset reference', async () => {
 		const onChange = vi.fn();
+		const user = userEvent.setup();
 		const sharedRef = 'var:preset|color|dark-background';
 
-		await renderAriakit(
+		await render(
 			<TypographyPanel
 				value={ {} }
 				inheritedValue={ {
@@ -824,9 +826,9 @@ describe( 'TypographyPanel — setTextColor link sync', () => {
 			/>
 		);
 
-		const swatches = await openTextColorDropdown();
+		const swatches = await openTextColorDropdown( user );
 		// swatch[0] = 'dark-background', swatch[1] = 'dark-text'
-		await click( swatches[ 1 ] );
+		await user.click( swatches[ 1 ] );
 
 		const result = onChange.mock.calls[ 0 ][ 0 ];
 		expect( result?.color?.text ).toBe( 'var:preset|color|dark-text' );
@@ -838,8 +840,9 @@ describe( 'TypographyPanel — setTextColor link sync', () => {
 
 	it( 'does NOT sync the link color when text and link have different raw refs, even if their decoded hex values match', async () => {
 		const onChange = vi.fn();
+		const user = userEvent.setup();
 
-		await renderAriakit(
+		await render(
 			<TypographyPanel
 				value={ {} }
 				inheritedValue={ {
@@ -857,8 +860,8 @@ describe( 'TypographyPanel — setTextColor link sync', () => {
 			/>
 		);
 
-		const swatches = await openTextColorDropdown();
-		await click( swatches[ 1 ] );
+		const swatches = await openTextColorDropdown( user );
+		await user.click( swatches[ 1 ] );
 
 		const result = onChange.mock.calls[ 0 ][ 0 ];
 		expect( result?.color?.text ).toBe( 'var:preset|color|dark-text' );
@@ -873,8 +876,9 @@ describe( 'TypographyPanel — setTextColor link sync', () => {
 		// subsequent text color change instead of being overwritten to
 		// track the text color.
 		const onChange = vi.fn();
+		const user = userEvent.setup();
 
-		await renderAriakit(
+		await render(
 			<TypographyPanel
 				value={ {
 					elements: {
@@ -890,9 +894,9 @@ describe( 'TypographyPanel — setTextColor link sync', () => {
 			/>
 		);
 
-		const swatches = await openTextColorDropdown();
+		const swatches = await openTextColorDropdown( user );
 		// swatch[0] = 'dark-background'
-		await click( swatches[ 0 ] );
+		await user.click( swatches[ 0 ] );
 
 		const result = onChange.mock.calls[ 0 ][ 0 ];
 		expect( result?.color?.text ).toBe(
@@ -908,6 +912,7 @@ describe( 'TypographyPanel — setTextColor link sync', () => {
 		// When the local link color equals the local text color it is
 		// still tracking, so a text color change carries the link along.
 		const onChange = vi.fn();
+		const user = userEvent.setup();
 		const sharedRef = 'var:preset|color|blue';
 		const distinctPaletteSettings = {
 			color: {
@@ -924,7 +929,7 @@ describe( 'TypographyPanel — setTextColor link sync', () => {
 			},
 		};
 
-		await renderAriakit(
+		await render(
 			<TypographyPanel
 				value={ {
 					color: { text: sharedRef },
@@ -937,9 +942,9 @@ describe( 'TypographyPanel — setTextColor link sync', () => {
 			/>
 		);
 
-		const swatches = await openTextColorDropdown();
+		const swatches = await openTextColorDropdown( user );
 		// swatch[1] = 'red'
-		await click( swatches[ 1 ] );
+		await user.click( swatches[ 1 ] );
 
 		const result = onChange.mock.calls[ 0 ][ 0 ];
 		expect( result?.color?.text ).toBe( 'var:preset|color|red' );

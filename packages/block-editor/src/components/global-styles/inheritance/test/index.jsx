@@ -2,8 +2,8 @@
  * External dependencies
  */
 import { describe, expect, test, vi } from 'vitest';
+import { userEvent } from 'vitest/browser';
 import { render, screen } from '@testing-library/react';
-import { click } from '@ariakit/test';
 
 /**
  * WordPress dependencies
@@ -34,7 +34,7 @@ describe( 'InheritanceResetButton', () => {
 		render(
 			<InheritanceResetButton onResetToInherited={ onResetToInherited } />
 		);
-		await click(
+		await userEvent.click(
 			screen.getByRole( 'button', { name: 'Reset to inherited value' } )
 		);
 		expect( onResetToInherited ).toHaveBeenCalledTimes( 1 );
@@ -244,7 +244,7 @@ describe( 'InheritanceToolsPanelItem local-override reset dot', () => {
 	test( 'the reset dot invokes the deselect handler', async () => {
 		const onDeselect = vi.fn();
 		renderItem( { hasLocalOverride: true, onDeselect } );
-		await click(
+		await userEvent.click(
 			screen.getByRole( 'button', { name: 'Reset to inherited value' } )
 		);
 		expect( onDeselect ).toHaveBeenCalled();

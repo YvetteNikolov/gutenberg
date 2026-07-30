@@ -35,6 +35,8 @@
 		"@wordpress/scripts": "file:../../packages/scripts",
 		"@wordpress/video-conversion": "file:../../packages/video-conversion",
 		"@wordpress/vips": "file:../../packages/vips",
+		"@wordpress/vitest-console": "file:../../packages/vitest-console",
+		"@wordpress/vitest-preset-default": "file:../../packages/vitest-preset-default",
 		"client-zip": "^2.4.5",
 		"glob": "^7.1.2",
 		"jest": "^30.4.1",
@@ -58,12 +60,13 @@
 		"access": "public"
 	},
 	"scripts": {
-		"test:unit": "wp-scripts test-unit-js --config jest.config.js",
+		"test:unit": "vitest run --config vitest.config.mjs",
 		"test:unit:conventions": "node scripts/validate-vitest-conventions.mjs",
-		"test:unit:vitest": "vitest run --config vitest.config.mjs",
-		"test:unit:profile": "wp-scripts --cpu-prof test-unit-js --runInBand --no-cache --verbose --config jest.config.js",
-		"test:unit:watch": "npm run test:unit -- --watch",
-		"test:unit:debug": "wp-scripts --inspect-brk test-unit-js --runInBand --no-cache --verbose --config jest.config.js",
+		"test:unit:packages": "node scripts/validate-vitest-package-consumer.mjs",
+		"test:unit:vitest": "npm run test:unit --",
+		"test:unit:profile": "wp-scripts --cpu-prof test-unit-js --run --config vitest.config.mjs --no-file-parallelism --maxWorkers=1",
+		"test:unit:watch": "vitest --config vitest.config.mjs",
+		"test:unit:debug": "wp-scripts --inspect-brk test-unit-js --run --config vitest.config.mjs --no-file-parallelism --maxWorkers=1",
 		"test:unit:routing": "node scripts/validate-test-routing.mjs"
 	}
 }

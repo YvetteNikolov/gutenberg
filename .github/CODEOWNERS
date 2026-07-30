@@ -71,6 +71,8 @@
 /packages/eslint-plugin                         @ntwb @nerrad @ajitbohra
 /packages/jest-console                          @ntwb @nerrad @ajitbohra
 /packages/jest-preset-default                   @ntwb @nerrad @ajitbohra
+/packages/vitest-console                        @ntwb @nerrad @ajitbohra
+/packages/vitest-preset-default                 @ntwb @nerrad @ajitbohra
 /packages/npm-package-json-lint-config          @ntwb @nerrad @ajitbohra
 /packages/postcss-themes                        @ntwb @nerrad @ajitbohra
 /packages/prettier-config                       @ntwb

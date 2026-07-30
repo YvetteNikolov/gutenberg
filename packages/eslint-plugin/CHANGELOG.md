@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### Breaking Changes
+
+-   Update the `test-unit` configuration to lint Vitest tests instead of Jest tests.
+
 ### Bug Fixes
 
 -   Apply test-only DOM global exceptions to both JavaScript and JSX test files ([#80990](https://github.com/WordPress/gutenberg/pull/80990)).

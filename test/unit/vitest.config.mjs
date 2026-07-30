@@ -33,8 +33,13 @@ const { sync: glob } = globPackage;
 const reporters = [ 'default' ];
 const styleMockAlias = {
 	find: /^.*\.(?:css|scss)$/,
-	replacement: path.join( ROOT_DIR, 'test/unit/config/style-mock.vitest.js' ),
+	replacement: fileURLToPath(
+		import.meta.resolve( '@wordpress/vitest-preset-default/style-mock' )
+	),
 };
+const setupGlobals = fileURLToPath(
+	import.meta.resolve( '@wordpress/vitest-preset-default/setup-globals' )
+);
 
 if ( process.env.GITHUB_ACTIONS === 'true' ) {
 	reporters.push( 'github-actions' );
@@ -247,10 +252,7 @@ export default defineConfig( {
 					},
 					include: vitestTests.jsdom,
 					setupFiles: [
-						path.join(
-							ROOT_DIR,
-							'test/unit/config/setup-globals.vitest.js'
-						),
+						setupGlobals,
 						path.join(
 							ROOT_DIR,
 							'test/unit/config/global-mocks.vitest.js'

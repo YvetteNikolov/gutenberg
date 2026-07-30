@@ -4,11 +4,14 @@
 
 ### Breaking Changes
 
+-   Run `test-unit-js` with Vitest 4 instead of Jest, replace the
+    `test-unit-jest` alias with `test-unit-vitest`, require Node.js 20.19 or
+    newer, and use ESM Vitest configuration.
 -   Upgrade the bundled Jest packages from v29 to v30 ([#80767](https://github.com/WordPress/gutenberg/pull/80767)).
 
 ### Enhancements
 
--       `format`: Detect `prettier.config.mjs` so the bundled default config is not used when one is present ([#80422](https://github.com/WordPress/gutenberg/pull/80422)).
+-         `format`: Detect `prettier.config.mjs` so the bundled default config is not used when one is present ([#80422](https://github.com/WordPress/gutenberg/pull/80422)).
 -   Support JSX files in direct build entry naming and default unit-test lint configuration ([#80990](https://github.com/WordPress/gutenberg/pull/80990)).
 
 ## 33.0.0 (2026-07-14)

@@ -256,11 +256,12 @@ for ( const file of vitestTests ) {
 	}
 
 	const packageJson = JSON.parse( readFileSync( packagePath, 'utf8' ) );
-	const version = packageJson.devDependencies?.vitest;
+	const version =
+		packageJson.devDependencies?.vitest || packageJson.dependencies?.vitest;
 	const relativePackagePath = path.relative( ROOT_DIR, packagePath );
 	if ( ! version ) {
 		violations.push(
-			`${ file }: ${ relativePackagePath } must declare devDependencies.vitest`
+			`${ file }: ${ relativePackagePath } must declare Vitest as a direct dependency`
 		);
 		continue;
 	}

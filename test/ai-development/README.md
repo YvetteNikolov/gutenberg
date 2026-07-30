@@ -14,6 +14,12 @@ The subject workspace excludes `test/ai-development/evals/`, so the agent cannot
 
 See Promptfoo's [coding-agent guide](https://www.promptfoo.dev/docs/guides/evaluate-coding-agents/) and [extension hooks](https://www.promptfoo.dev/docs/configuration/reference/#extension-hooks).
 
+### Grading code changes
+
+Promptfoo treats a coding agent's final message as its output, not the files it changed. When a suite needs deterministic checks of the implementation, an output transform captures the temporary workspace's changed-file list and Git diff before cleanup. Separate JavaScript assertions then grade specific requirements and report them as named Promptfoo metrics.
+
+Keeping these assertions separate makes failures precise, while capturing the artifact once avoids repeated Git work. It also retains the raw diff in the Promptfoo result for later inspection. Promptfoo's built-in `agent-rubric` complements these exact checks by reviewing the live workspace for broader quality and correctness.
+
 ## Setup
 
 Use Node.js 22.22 or newer; Node.js 24 LTS is recommended.
@@ -69,6 +75,8 @@ evals/
 ├── package.json
 ├── package-lock.json
 └── suites/SUITE_NAME/
+    ├── artifact-grader.mjs        optional deterministic artifact checks
+    ├── artifact-grader.test.mjs   tests for the artifact checks
     ├── promptfooconfig.yaml        providers, tracing, permissions, repeats
     ├── prompt.md                   task shown to the agent
     └── tests.yaml                  assertions and named metrics

@@ -5,7 +5,8 @@
 ### Enhancements
 
 -   Remove the stale Jest peer dependency; this package only provides fixtures
-    used by Playwright end-to-end tests.
+    used by Playwright end-to-end tests
+    ([#80999](https://github.com/WordPress/gutenberg/pull/80999)).
 
 ## 9.16.0 (2026-07-14)
 

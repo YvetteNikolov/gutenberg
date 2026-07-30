@@ -103,6 +103,8 @@
 					"packages/theme/src/stylelint-plugins/test/no-unknown-ds-tokens.test.ts",
 					"test/unit/scripts/test/discover-test-files.js",
 					"test/unit/scripts/test/resolver.js",
+					"test/unit/scripts/test/vite-block-metadata.vitest.test.js",
+					"tools/agents/test/setup-skills.test.js",
 					"tools/validation/validate-package-contents.test.js"
 				],
 				"directories": [

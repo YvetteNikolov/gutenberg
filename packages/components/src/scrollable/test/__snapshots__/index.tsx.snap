@@ -5,7 +5,7 @@ exports[`props > should render correctly 1`] = `
   height: 100%;
 }
 
-@media only screen and ( min-device-width: 40em ) {
+@media only screen and ( min-device-width:40em ) {
   .emotion-1::-webkit-scrollbar {
     height: 12px;
     width: 12px;
@@ -24,7 +24,7 @@ exports[`props > should render correctly 1`] = `
     -webkit-background-clip: padding-box;
     background-clip: padding-box;
     background-color: rgba(0, 0, 0, 0.2);
-    border: 2px solid rgba( 0, 0, 0, 0 );
+    border: 2px solid rgba( 0,0,0,0 );
     border-radius: 7px;
   }
 

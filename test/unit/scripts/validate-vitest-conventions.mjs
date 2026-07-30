@@ -17,9 +17,8 @@ import { fileURLToPath } from 'node:url';
 /**
  * External dependencies
  */
-import { parseSync } from '@babel/core';
-import traverseModule from '@babel/traverse';
 import globPackage from 'glob';
+import { parser } from 'typescript-eslint';
 
 /**
  * Internal dependencies
@@ -34,7 +33,6 @@ import {
 	hasTestEnvironmentOverride,
 } from './vitest-conventions.mjs';
 
-const traverse = traverseModule.default ?? traverseModule;
 const { sync: glob } = globPackage;
 const require = createRequire( import.meta.url );
 const ROOT_DIR = path.resolve(
@@ -119,6 +117,23 @@ function isDynamicImport( node ) {
 	);
 }
 
+function visitAst( node, visitorKeys, visitors ) {
+	visitors[ node.type ]?.( node );
+
+	for ( const key of visitorKeys[ node.type ] ?? [] ) {
+		const child = node[ key ];
+		if ( Array.isArray( child ) ) {
+			for ( const item of child ) {
+				if ( item ) {
+					visitAst( item, visitorKeys, visitors );
+				}
+			}
+		} else if ( child ) {
+			visitAst( child, visitorKeys, visitors );
+		}
+	}
+}
+
 function findWorkspacePackage( file ) {
 	let directory = path.dirname( path.join( ROOT_DIR, file ) );
 
@@ -139,44 +154,32 @@ function findWorkspacePackage( file ) {
 for ( const file of files ) {
 	const filename = path.join( ROOT_DIR, file );
 	const source = readFileSync( filename, 'utf8' );
-	const plugins = [
-		'decorators-legacy',
-		'importAttributes',
-		'jsx',
-		'topLevelAwait',
-	];
-
-	if ( /\.[cm]?tsx?$/.test( file ) ) {
-		plugins.push( 'typescript' );
-	}
-
-	const ast = parseSync( source, {
-		ast: true,
-		babelrc: false,
-		code: false,
-		configFile: false,
-		filename,
-		parserOpts: {
-			plugins,
-			sourceType: 'module',
-		},
+	const { ast, scopeManager, visitorKeys } = parser.parseForESLint( source, {
+		ecmaVersion: 'latest',
+		filePath: filename,
+		loc: true,
+		range: true,
+		sourceType: 'module',
 	} );
+	const unboundIdentifiers = new Set(
+		scopeManager.globalScope.through.map(
+			( reference ) => reference.identifier
+		)
+	);
 
-	traverse( ast, {
-		AssignmentExpression( astPath ) {
-			if ( isCommonJsExport( astPath.node.left ) ) {
+	visitAst( ast, visitorKeys, {
+		AssignmentExpression( node ) {
+			if ( isCommonJsExport( node.left ) ) {
 				violations.push(
-					`${ file }:${ astPath.node.loc.start.line } CommonJS export`
+					`${ file }:${ node.loc.start.line } CommonJS export`
 				);
 			}
 		},
-		CallExpression( astPath ) {
-			const { node } = astPath;
-
+		CallExpression( node ) {
 			if (
 				node.callee?.type === 'Identifier' &&
 				node.callee.name === 'require' &&
-				! astPath.scope.hasBinding( 'require' )
+				unboundIdentifiers.has( node.callee )
 			) {
 				violations.push(
 					`${ file }:${ node.loc.start.line } unbound require()`
@@ -197,15 +200,15 @@ for ( const file of files ) {
 				);
 			}
 		},
-		ReferencedIdentifier( astPath ) {
-			const { name } = astPath.node;
+		Identifier( node ) {
+			const { name } = node;
 			if (
 				vitestTests.includes( file ) &&
 				vitestApiNames.has( name ) &&
-				! astPath.scope.hasBinding( name )
+				unboundIdentifiers.has( node )
 			) {
 				violations.push(
-					`${ file }:${ astPath.node.loc.start.line } unbound Vitest API: ${ name }`
+					`${ file }:${ node.loc.start.line } unbound Vitest API: ${ name }`
 				);
 			}
 		},

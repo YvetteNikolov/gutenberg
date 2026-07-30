@@ -3,6 +3,11 @@
  */
 import { describe, expect, it } from 'vitest';
 
+/**
+ * Internal dependencies
+ */
+import { normalizeEmotionClassNames } from '../to-match-diff-snapshot.vitest';
+
 describe( 'snapshotDiff', () => {
 	it( 'formats the established uncolored object diff', () => {
 		expect( { visible: false } ).toMatchDiffSnapshot(
@@ -20,6 +25,23 @@ describe( 'snapshotDiff', () => {
 				bAnnotation: 'Base styles',
 			},
 			'custom annotations'
+		);
+	} );
+
+	it( 'normalizes Emotion hashes without hiding distinct classes', () => {
+		const received = document.createElement( 'div' );
+		const expected = document.createElement( 'div' );
+		received.className = 'css-received-Box css-shared-Common';
+		expected.className = 'css-expected-Box css-shared-Common';
+
+		const [ normalizedReceived, normalizedExpected ] =
+			normalizeEmotionClassNames( received, expected );
+
+		expect( normalizedReceived.className ).toBe(
+			'emotion-diff-0-Box emotion-diff-1-Common'
+		);
+		expect( normalizedExpected.className ).toBe(
+			'emotion-diff-2-Box emotion-diff-1-Common'
 		);
 	} );
 

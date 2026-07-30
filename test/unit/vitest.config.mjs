@@ -8,7 +8,7 @@ import { fileURLToPath } from 'node:url';
 /**
  * External dependencies
  */
-import { transformAsync } from '@babel/core';
+import react from '@vitejs/plugin-react-swc';
 import { playwright } from '@vitest/browser-playwright';
 import globPackage from 'glob';
 import { defineConfig } from 'vitest/config';
@@ -64,50 +64,23 @@ const transpiledPackageNames = glob(
 	return relative.split( path.sep )[ 1 ];
 } );
 
-function wordpressBabelTransform() {
-	return {
-		name: 'wordpress-babel-transform',
-		enforce: 'pre',
-		async transform( source, id ) {
-			const filename = id.split( '?', 1 )[ 0 ];
-
-			if (
-				! filename.startsWith( `${ ROOT_DIR }${ path.sep }` ) ||
-				filename.includes( `${ path.sep }node_modules${ path.sep }` ) ||
-				! /\.m?[jt]sx?$/.test( filename )
-			) {
-				return;
-			}
-
-			const result = await transformAsync( source, {
-				caller: {
-					name: 'vite',
-					supportsDynamicImport: true,
-					supportsExportNamespaceFrom: true,
-					supportsStaticESM: true,
-					supportsTopLevelAwait: true,
-				},
-				envName: 'test',
-				filename,
-				root: ROOT_DIR,
-				sourceMaps: true,
-			} );
-
-			if ( ! result?.code ) {
-				return;
-			}
-
-			return {
-				code: result.code,
-				map: result.map,
-			};
-		},
-	};
-}
-
 export default defineConfig( {
 	root: ROOT_DIR,
-	plugins: [ wordpressBabelTransform() ],
+	plugins: [
+		react( {
+			plugins: [
+				[
+					'@swc/plugin-emotion',
+					{
+						// Jest's Babel transform preserved Emotion labels in
+						// test snapshots regardless of NODE_ENV.
+						autoLabel: 'always',
+						labelFormat: '[local]',
+					},
+				],
+			],
+		} ),
+	],
 	resolve: {
 		alias: [
 			{
@@ -164,11 +137,6 @@ export default defineConfig( {
 			},
 		],
 	},
-	server: {
-		deps: {
-			external: [ /^@babel\// ],
-		},
-	},
 	test: {
 		globals: false,
 		includeTaskLocation: true,
@@ -178,8 +146,6 @@ export default defineConfig( {
 				extends: true,
 				optimizeDeps: {
 					entries: vitestTests.browser,
-					// Babel injects the automatic JSX runtime after Vite's
-					// dependency scan, so declare it directly.
 					include: [
 						'@base-ui/react',
 						'@base-ui/react/alert-dialog',
@@ -221,7 +187,6 @@ export default defineConfig( {
 						're-resizable',
 						'react-day-picker',
 						'react-day-picker/locale',
-						'react/jsx-runtime',
 						'rememo',
 						'remove-accents',
 						'redux',

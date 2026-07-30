@@ -24,7 +24,7 @@
           filesystem:
               allowManagedReadPathsOnly: true
       # Give deterministic and model-based graders the final response and diff.
-      transform: file://../../lib/artifact-grader.mjs:includeWorkspaceArtifact
+      transform: file://artifact-grader.mjs:includeWorkspaceArtifact
   assert:
       - type: trajectory:step-count
         value:
@@ -48,23 +48,23 @@
         metric: Skipped the PHPUnit reference
 
       - type: javascript
-        value: file://../../lib/artifact-grader.mjs:changedE2eSpec
+        value: file://artifact-grader.mjs:changedE2eSpec
         metric: Changed an E2E spec
 
       - type: javascript
-        value: file://../../lib/artifact-grader.mjs:changedOnlyE2eTests
+        value: file://artifact-grader.mjs:changedOnlyE2eTests
         metric: Kept changes scoped to E2E tests
 
       - type: javascript
-        value: file://../../lib/artifact-grader.mjs:usedAccessibleParagraphLocator
+        value: file://artifact-grader.mjs:usedAccessibleParagraphLocator
         metric: Used the accessible paragraph locator
 
       - type: javascript
-        value: file://../../lib/artifact-grader.mjs:enteredLiteralAmpersand
+        value: file://artifact-grader.mjs:enteredLiteralAmpersand
         metric: Entered a literal ampersand
 
       - type: javascript
-        value: file://../../lib/artifact-grader.mjs:assertedUnencodedAmpersand
+        value: file://artifact-grader.mjs:assertedUnencodedAmpersand
         metric: Asserted unencoded content
 
       - type: llm-rubric

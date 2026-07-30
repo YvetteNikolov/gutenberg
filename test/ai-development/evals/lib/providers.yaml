@@ -4,7 +4,7 @@
   config:
       # Let the Claude CLI use its existing subscription login.
       apiKeyRequired: false
-      model: sonnet
+      model: opus
       max_turns: 30
       # Only project-level instructions, so the developer's own
       # ~/.claude guidance cannot leak into the subject.

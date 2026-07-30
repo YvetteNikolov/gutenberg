@@ -11,9 +11,9 @@
       setting_sources: ['project']
       # Use Bash for reads so Promptfoo can represent both Claude's Bash
       # calls and Codex's exec_command calls as command trajectory steps.
-      tools: ['Bash', 'Edit', 'Write']
-      custom_allowed_tools: ['Bash', 'Edit', 'Write']
-      disallowed_tools: ['Task', 'WebFetch', 'WebSearch']
+      tools: ['Bash', 'Edit', 'Write', 'Task']
+      custom_allowed_tools: ['Bash', 'Edit', 'Write', 'Task']
+      disallowed_tools: ['WebFetch', 'WebSearch']
 
 - id: openai:codex-sdk
   label: codex

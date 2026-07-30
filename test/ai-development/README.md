@@ -74,23 +74,21 @@ npm --prefix test/ai-development/evals run validate
 npm --prefix test/ai-development/evals test
 
 # Run every suite and provider.
-npm run test:agent-evals
+npm run test:agent-evals -- --config 'suites/*/promptfooconfig.yaml'
 
 # Run one suite.
-npm run test:agent-evals -- suites/SUITE_NAME/promptfooconfig.yaml
+npm run test:agent-evals -- --config suites/SUITE_NAME/promptfooconfig.yaml
 
 # Run one provider.
-npm run test:agent-evals -- suites/SUITE_NAME/promptfooconfig.yaml --filter-providers codex
-npm run test:agent-evals -- suites/SUITE_NAME/promptfooconfig.yaml --filter-providers claude
+npm run test:agent-evals -- --config suites/SUITE_NAME/promptfooconfig.yaml --filter-providers codex
+npm run test:agent-evals -- --config suites/SUITE_NAME/promptfooconfig.yaml --filter-providers claude
 
 # Override repeats.
-npm run test:agent-evals -- suites/SUITE_NAME/promptfooconfig.yaml --repeat 3
+npm run test:agent-evals -- --config suites/SUITE_NAME/promptfooconfig.yaml --repeat 3
 
 # Open the local results viewer.
 npm --prefix test/ai-development/evals run view
 ```
-
-The runner disables Promptfoo telemetry and response caching. Assertion failures produce failed rows without a nonzero process exit; provider and runtime errors still fail the command. Treat the results table as the outcome.
 
 Results under `evals/results/` are gitignored and may contain source code and tool output.
 
@@ -101,7 +99,6 @@ evals/
 ├── lib/
 │   ├── default-test.yaml           shared test options
 │   ├── providers.yaml              shared coding agents
-│   ├── run.sh                      suite runner
 │   ├── workspace-artifact.mjs      Git artifact capture and parsing
 │   ├── workspace-artifact.test.mjs tests for artifact handling
 │   └── workspace-extension.mjs     workspace lifecycle

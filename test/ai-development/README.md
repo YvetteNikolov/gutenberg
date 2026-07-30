@@ -22,17 +22,17 @@ Promptfoo runs the prompt × provider × test × repeat matrix. Its standard lif
                  │
        ┌─────────┴─────────┐
        ▼                   ▼
-  tool calls         agent response 
-                        + Git diff  
+  tool calls          live workspace
+                      + agent response
        │                   │
        └─────────┬─────────┘
                  ▼
          Promptfoo assertions
-    ┌────────────┼────────────┐
-    ▼            ▼            ▼
- tool-call  deterministic  agent-rubric
-  checks     code checks     review
-    └────────────┼────────────┘
+         ┌───────┴───────┐
+         ▼               ▼
+  deterministic     agent-rubric
+   assertions          review
+         └───────┬───────┘
                  ▼
        result row and metrics
                  │
@@ -46,9 +46,7 @@ See Promptfoo's [coding-agent guide](https://www.promptfoo.dev/docs/guides/evalu
 
 ### Grading code changes
 
-Promptfoo's default is to grade the agent's final message, not the files it changed. We need to grade the code as well. A shared output transform captures the changed-file list and Git diff before cleanup. Deterministic JavaScript assertions then grade that artifact as separate named Promptfoo metrics, while the raw diff remains available in the result.
-
-Promptfoo's built-in `agent-rubric` complements these exact checks by reviewing the live workspace for broader quality and correctness.
+Promptfoo's built-in trajectory assertions deterministically check tool calls, including which testing references the agent read or skipped. Its built-in `agent-rubric` receives read-only access to the live workspace, where the grading agent inspects Git status, the diff, relevant documentation, and changed files against the suite's rubric. This keeps code review inside Promptfoo without relying on the subject agent's final message or custom diff processing.
 
 ## Setup
 
@@ -69,9 +67,6 @@ Run from the repository root:
 ```bash
 # Validate configuration without model calls.
 npm --prefix test/ai-development/evals run validate
-
-# Test deterministic graders without model calls.
-npm --prefix test/ai-development/evals test
 
 # Run every suite and provider.
 npm run test:agent-evals -- --config 'suites/*/promptfooconfig.yaml'
@@ -99,14 +94,10 @@ evals/
 ├── lib/
 │   ├── default-test.yaml           shared test options
 │   ├── providers.yaml              shared coding agents
-│   ├── workspace-artifact.mjs      Git artifact capture and parsing
-│   ├── workspace-artifact.test.mjs tests for artifact handling
 │   └── workspace-extension.mjs     workspace lifecycle
 ├── package.json
 ├── package-lock.json
 └── suites/SUITE_NAME/
-    ├── artifact-grader.mjs        optional deterministic artifact checks
-    ├── artifact-grader.test.mjs   tests for the artifact checks
     ├── promptfooconfig.yaml        providers, tracing, permissions, repeats
     ├── prompt.md                   task shown to the agent
     └── tests.yaml                  assertions and named metrics

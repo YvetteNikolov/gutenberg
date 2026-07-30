@@ -13,8 +13,6 @@ options:
             allowManagedDomainsOnly: true
         filesystem:
             allowManagedReadPathsOnly: true
-    # Give deterministic graders the final response and Git artifact.
-    transform: file://../../lib/workspace-artifact.mjs:includeWorkspaceArtifact
     # The workspace extension adds each row's temporary working_dir.
     provider:
         id: openai:codex-sdk

@@ -31,33 +31,19 @@
             max: 0
         metric: Skipped the PHPUnit reference
 
-      - type: javascript
-        value: file://artifact-grader.mjs:changedE2eSpec
-        metric: Changed an E2E spec
-
-      - type: javascript
-        value: file://artifact-grader.mjs:changedOnlyE2eTests
-        metric: Kept changes scoped to E2E tests
-
-      - type: javascript
-        value: file://artifact-grader.mjs:usedAccessibleParagraphLocator
-        metric: Used the accessible paragraph locator
-
-      - type: javascript
-        value: file://artifact-grader.mjs:enteredLiteralAmpersand
-        metric: Entered a literal ampersand
-
-      - type: javascript
-        value: file://artifact-grader.mjs:assertedUnencodedAmpersand
-        metric: Asserted unencoded content
-
       - type: agent-rubric
         value: |
-            Inspect the available workspace and its Git diff. Pass only if the
-            diff adds a focused Gutenberg Playwright E2E test
-            that enters a literal `&` in a paragraph through the editor UI and
-            explicitly verifies it remains `&`, not `&amp;`. The test should
-            find the block through `editor.canvas.getByRole( 'document', {
-            name: 'Block: Paragraph' } )` and follow nearby conventions.
+            Inspect the available workspace's Git status, diff, and relevant
+            files. Read `skills/testing/references/e2e.md`. Pass only if the
+            change:
+            - adds a focused Gutenberg Playwright E2E test;
+            - stays scoped to the appropriate E2E test files;
+            - enters a literal `&` in the paragraph through the editor UI;
+            - reads the serialized post content with
+              `editor.getEditedPostContent()`;
+            - directly asserts that content without using `expect.poll()`;
+            - verifies that the serialized content contains `&`, not
+              `&amp;`; and
+            - follows nearby test conventions.
             Evaluate the workspace rather than claims in the response.
         metric: Agent review of test quality

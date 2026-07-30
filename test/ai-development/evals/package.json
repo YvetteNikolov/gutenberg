@@ -16,7 +16,6 @@
 		"url": "https://github.com/WordPress/gutenberg/issues"
 	},
 	"scripts": {
-		"test": "node --test lib/*.test.mjs suites/*/*.test.mjs",
 		"validate": "for c in suites/*/promptfooconfig.yaml; do promptfoo validate config --config \"$c\" || exit 1; done",
 		"eval": "promptfoo eval",
 		"view": "promptfoo view"

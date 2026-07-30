@@ -305,10 +305,7 @@ for ( const projectName of VITEST_PROJECT_NAMES ) {
 				path.join( ROOT_DIR, 'typings' ),
 				path.join( ROOT_DIR, 'node_modules/@types' ),
 			],
-			types:
-				projectName === 'jsdom'
-					? [ ...commonTypes, 'gutenberg-vitest-test-env' ]
-					: commonTypes,
+			types: commonTypes,
 		},
 		files: [
 			compatibilityTypesPath,

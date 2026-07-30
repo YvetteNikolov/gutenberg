@@ -11,7 +11,7 @@ The standalone `evals/` package uses [Promptfoo](https://www.promptfoo.dev/docs/
 Promptfoo runs the prompt × provider × test × repeat matrix. Its standard lifecycle hooks create a clean Git workspace from the committed `HEAD` before each row and remove it afterward. The native Claude and Codex providers receive that directory as `working_dir`.
 
 ```text
-prompt × provider × test × repeat (parallel container)
+      prompt × provider × test
                  │
                  ▼
    beforeEach: create temporary repo
@@ -46,7 +46,7 @@ See Promptfoo's [coding-agent guide](https://www.promptfoo.dev/docs/guides/evalu
 
 ### Grading code changes
 
-Promptfoo's default is to grade the agent's final message, not the files it changed. We need to grade the code as well. A suite-specific output transform captures the changed-file list and Git diff before cleanup. Deterministic JavaScript assertions then grade that artifact as separate named Promptfoo metrics, while the raw diff remains available in the result.
+Promptfoo's default is to grade the agent's final message, not the files it changed. We need to grade the code as well. A shared output transform captures the changed-file list and Git diff before cleanup. Deterministic JavaScript assertions then grade that artifact as separate named Promptfoo metrics, while the raw diff remains available in the result.
 
 Promptfoo's built-in `agent-rubric` complements these exact checks by reviewing the live workspace for broader quality and correctness.
 
@@ -99,8 +99,12 @@ Results under `evals/results/` are gitignored and may contain source code and to
 ```text
 evals/
 ├── lib/
-│   ├── run.sh                     suite runner
-│   └── workspace-extension.mjs    workspace lifecycle
+│   ├── default-test.yaml           shared test options
+│   ├── providers.yaml              shared coding agents
+│   ├── run.sh                      suite runner
+│   ├── workspace-artifact.mjs      Git artifact capture and parsing
+│   ├── workspace-artifact.test.mjs tests for artifact handling
+│   └── workspace-extension.mjs     workspace lifecycle
 ├── package.json
 ├── package-lock.json
 └── suites/SUITE_NAME/
@@ -117,6 +121,6 @@ For each suite:
 
 1. State the narrow claim the evaluation supports.
 2. Write a realistic prompt that does not reveal the expected behavior.
-3. Configure native providers and tracing in `promptfooconfig.yaml`.
+3. Reference the shared providers and configure tracing in `promptfooconfig.yaml`.
 4. Put cases and named metrics in `tests.yaml`.
 5. Validate, run one provider once, then run the intended matrix with repeats.

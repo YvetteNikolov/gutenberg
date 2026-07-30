@@ -1,0 +1,25 @@
+# Options shared by every evaluation case.
+options:
+    bustCache: true
+    # The beforeEach extension fills in working_dir and the dynamic filesystem
+    # allowlists. Codex ignores this Claude-specific sandbox key.
+    sandbox:
+        enabled: true
+        failIfUnavailable: true
+        autoAllowBashIfSandboxed: true
+        allowUnsandboxedCommands: false
+        network:
+            allowedDomains: []
+            allowManagedDomainsOnly: true
+        filesystem:
+            allowManagedReadPathsOnly: true
+    # Give deterministic graders the final response and Git artifact.
+    transform: file://../../lib/workspace-artifact.mjs:includeWorkspaceArtifact
+    # The workspace extension adds each row's temporary working_dir.
+    provider:
+        id: openai:codex-sdk
+        config:
+            sandbox_mode: read-only
+            approval_policy: never
+            network_access_enabled: false
+            web_search_mode: disabled

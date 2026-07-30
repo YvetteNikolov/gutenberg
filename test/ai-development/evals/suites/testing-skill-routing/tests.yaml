@@ -9,30 +9,6 @@
 # distinction is which reference was opened. Promptfoo normalizes both agents'
 # shell calls into provider-independent command trajectory steps.
 - description: e2e test for unencoded ampersands in the paragraph block
-  options:
-      bustCache: true
-      # Promptfoo's beforeEach extension fills in working_dir and the dynamic
-      # filesystem allowlists. Codex ignores this Claude-specific sandbox key.
-      sandbox:
-          enabled: true
-          failIfUnavailable: true
-          autoAllowBashIfSandboxed: true
-          allowUnsandboxedCommands: false
-          network:
-              allowedDomains: []
-              allowManagedDomainsOnly: true
-          filesystem:
-              allowManagedReadPathsOnly: true
-      # Give deterministic graders the final response and diff.
-      transform: file://artifact-grader.mjs:includeWorkspaceArtifact
-      # The workspace extension adds this row's temporary working_dir.
-      provider:
-          id: openai:codex-sdk
-          config:
-              sandbox_mode: read-only
-              approval_policy: never
-              network_access_enabled: false
-              web_search_mode: disabled
   assert:
       - type: trajectory:step-count
         value:

@@ -2,7 +2,7 @@
 
 This directory tests Gutenberg's AI-assisted development workflows for effectiveness and efficiency.
 
-## Current suite
+## Overview
 
 The standalone `evals/` package uses [Promptfoo](https://www.promptfoo.dev/docs/) to run coding agents against isolated temporary repositories.
 
@@ -34,18 +34,21 @@ Run from the repository root:
 # Validate configuration without model calls.
 npm --prefix test/ai-development/evals run validate
 
+# Test deterministic graders without model calls.
+npm --prefix test/ai-development/evals test
+
 # Run every suite and provider.
 npm run test:agent-evals
 
 # Run one suite.
-npm run test:agent-evals -- suites/testing-skill-routing/promptfooconfig.yaml
+npm run test:agent-evals -- suites/SUITE_NAME/promptfooconfig.yaml
 
 # Run one provider.
-npm run test:agent-evals -- suites/testing-skill-routing/promptfooconfig.yaml --filter-providers codex
-npm run test:agent-evals -- suites/testing-skill-routing/promptfooconfig.yaml --filter-providers claude
+npm run test:agent-evals -- suites/SUITE_NAME/promptfooconfig.yaml --filter-providers codex
+npm run test:agent-evals -- suites/SUITE_NAME/promptfooconfig.yaml --filter-providers claude
 
 # Override repeats.
-npm run test:agent-evals -- suites/testing-skill-routing/promptfooconfig.yaml --repeat 3
+npm run test:agent-evals -- suites/SUITE_NAME/promptfooconfig.yaml --repeat 3
 
 # Open the local results viewer.
 npm --prefix test/ai-development/evals run view
@@ -60,11 +63,12 @@ Results under `evals/results/` are gitignored and may contain source code and to
 ```text
 evals/
 ├── lib/
-│   ├── workspace-extension.mjs     beforeEach/afterEach workspace lifecycle
-│   └── run.sh                      suite selection and shared CLI behavior
+│   ├── grading helpers
+│   ├── workspace lifecycle
+│   └── suite runner
 ├── package.json
 ├── package-lock.json
-└── suites/testing-skill-routing/
+└── suites/SUITE_NAME/
     ├── promptfooconfig.yaml        providers, tracing, permissions, repeats
     ├── prompt.md                   task shown to the agent
     └── tests.yaml                  assertions and named metrics

@@ -10,8 +10,8 @@ import {
 	useState,
 } from '@wordpress/element';
 import { withFilters } from '@wordpress/components';
-// eslint-disable-next-line @wordpress/use-recommended-components -- `Combobox`, `Field` and `InputLayout` are not yet allowlisted for use in a WordPress environment.
-import { Combobox, Field, InputLayout, Stack } from '@wordpress/ui';
+// eslint-disable-next-line @wordpress/use-recommended-components
+import { Field, SearchableChipSelect, Stack } from '@wordpress/ui';
 import { useSelect, useDispatch, useRegistry } from '@wordpress/data';
 import { store as coreStore } from '@wordpress/core-data';
 import { useDebounce } from '@wordpress/compose';
@@ -46,17 +46,17 @@ const DEFAULT_QUERY = {
 };
 
 /**
- * Maps a term record to the `{ value, label }` shape the combobox works with.
+ * Maps a term record to the `{ value, label }` shape the select works with.
  *
  * @param {Object} term The term record.
  *
- * @return {{value: number, label: string}} The combobox item.
+ * @return {{value: string, label: string}} The select item.
  */
 const termToItem = ( term ) => ( {
-	value: term.id,
+	value: String( term.id ),
 	label: unescapeString( term.name ),
 } );
-
+const itemToTermId = ( item ) => Number( item.value );
 const isSameTerm = ( termA, termB ) => termA.value === termB.value;
 const isSameTermName = ( nameA, nameB ) =>
 	nameA.toLowerCase() === nameB.toLowerCase();
@@ -80,7 +80,6 @@ export function FlatTermSelector( { slug } ) {
 	const [ inputValue, setInputValue ] = useState( '' );
 	const [ suggestions, setSuggestions ] = useState( EMPTY_ARRAY );
 	const lastSearchRef = useRef( '' );
-	const fieldRef = useRef( null );
 	const registry = useRegistry();
 
 	const { editPost } = useDispatch( editorStore );
@@ -175,20 +174,19 @@ export function FlatTermSelector( { slug } ) {
 	const hasExactMatch = [ ...suggestions, ...values ].some( ( term ) =>
 		isSameTermName( term.label, newTermName )
 	);
-	const creatableTerm = useMemo(
+	const creatableItem = useMemo(
 		() =>
 			hasCreateAction && !! newTermName && ! hasExactMatch
-				? { value: CREATE_TERM_VALUE, label: newTermName }
+				? {
+						value: CREATE_TERM_VALUE,
+						label: sprintf(
+							/* translators: %s: term name. */
+							_x( 'Create: %s', 'term' ),
+							newTermName
+						),
+				  }
 				: undefined,
 		[ hasCreateAction, hasExactMatch, newTermName ]
-	);
-
-	// The creatable term is part of `items` so that it can be highlighted with
-	// the keyboard, while being rendered separately in the list footer.
-	const items = useMemo(
-		() =>
-			creatableTerm ? [ ...suggestions, creatableTerm ] : suggestions,
-		[ creatableTerm, suggestions ]
 	);
 
 	if ( ! hasAssignAction ) {
@@ -209,7 +207,7 @@ export function FlatTermSelector( { slug } ) {
 				throw error;
 			}
 
-			return { value: error.data.term_id, label: name };
+			return { value: String( error.data.term_id ), label: name };
 		}
 	}
 
@@ -218,13 +216,13 @@ export function FlatTermSelector( { slug } ) {
 	}
 
 	function onChange( newValues ) {
-		const termToCreate = newValues.find(
-			( term ) => term.value === CREATE_TERM_VALUE
+		const hasCreatableItem = newValues.some(
+			( item ) => item.value === CREATE_TERM_VALUE
 		);
 		const selectedTerms = newValues.filter(
-			( term ) => term !== termToCreate
+			( item ) => item.value !== CREATE_TERM_VALUE
 		);
-		const selectedTermIds = selectedTerms.map( ( term ) => term.value );
+		const selectedTermIds = selectedTerms.map( itemToTermId );
 
 		// Optimistically update term values.
 		// The selector will always re-fetch terms later.
@@ -239,15 +237,18 @@ export function FlatTermSelector( { slug } ) {
 			);
 		}
 
-		if ( ! termToCreate ) {
+		if ( ! hasCreatableItem ) {
 			onUpdateTerms( selectedTermIds );
 			return;
 		}
 
-		findOrCreateTerm( termToCreate.label )
+		findOrCreateTerm( newTermName )
 			.then( ( savedTerm ) => {
 				setValues( [ ...selectedTerms, savedTerm ] );
-				onUpdateTerms( [ ...selectedTermIds, savedTerm.value ] );
+				onUpdateTerms( [
+					...selectedTermIds,
+					itemToTermId( savedTerm ),
+				] );
 			} )
 			.catch( ( error ) => {
 				createErrorNotice( error.message, {
@@ -301,87 +302,36 @@ export function FlatTermSelector( { slug } ) {
 		<Stack direction="column" gap="lg">
 			<Field.Root>
 				<Field.Label>{ newTermLabel }</Field.Label>
-				<Combobox.Root
-					multiple
+				<SearchableChipSelect
 					autoHighlight
 					openOnInputClick={ false }
 					// Terms are searched through the REST API.
 					filter={ null }
-					items={ items }
+					items={ suggestions }
+					creatableItem={ creatableItem }
 					value={ values }
 					onValueChange={ onChange }
 					isItemEqualToValue={ isSameTerm }
 					inputValue={ inputValue }
 					onInputValueChange={ onInputValueChange }
-				>
-					<Combobox.Chips
-						ref={ fieldRef }
-						render={
-							<InputLayout className="editor-post-taxonomies__flat-term-selector" />
-						}
-					>
-						<Combobox.Value>
-							{ ( selectedTerms ) =>
-								selectedTerms.map( ( term ) => (
-									<Combobox.ChipWithRemove
-										key={ term.value }
-										removeLabel={ sprintf(
-											/* translators: %s: term name. */
-											_x( 'Remove %s', 'term' ),
-											term.label
-										) }
-									>
-										{ term.label }
-									</Combobox.ChipWithRemove>
-								) )
-							}
-						</Combobox.Value>
-						<Combobox.Input
-							className="editor-post-taxonomies__flat-term-selector-input"
-							render={ <input type="text" /> }
-						/>
-					</Combobox.Chips>
-					<Combobox.Popup
-						// Anchor to the field, the input alone is only as wide
-						// as the space left by the chips.
-						positioner={
-							<Combobox.Positioner anchor={ fieldRef } />
-						}
-					>
-						<Combobox.Empty>{ notFoundLabel }</Combobox.Empty>
-						<Combobox.List>
-							<Combobox.ListBody>
-								<Combobox.Collection>
-									{ ( term ) =>
-										// The creatable term renders in the footer.
-										term !== creatableTerm && (
-											<Combobox.Item
-												key={ term.value }
-												value={ term }
-											>
-												{ term.label }
-											</Combobox.Item>
-										)
-									}
-								</Combobox.Collection>
-							</Combobox.ListBody>
-							{ creatableTerm && (
-								<Combobox.ListFooter>
-									<Combobox.Item
-										variant="creatable"
-										value={ creatableTerm }
-									>
-										{ sprintf(
-											/* translators: %s: term name. */
-											_x( 'Create: %s', 'term' ),
-											creatableTerm.label
-										) }
-									</Combobox.Item>
-								</Combobox.ListFooter>
-							) }
-						</Combobox.List>
-					</Combobox.Popup>
-				</Combobox.Root>
+					emptyContent={ notFoundLabel }
+					searchPlaceholder=""
+					showClearButton={ false }
+					chipsContent={ ( selectedTerms ) =>
+						selectedTerms.map( ( term ) => (
+							<SearchableChipSelect.ChipWithRemove
+								key={ term.value }
+								removeLabel={ sprintf(
+									/* translators: %s: term name. */
+									_x( 'Remove %s', 'term' ),
+									term.label
+								) }
+							>
+								{ term.label }
+							</SearchableChipSelect.ChipWithRemove>
+						) )
+					}
+				/>
 			</Field.Root>
 			<MostUsedTerms taxonomy={ taxonomy } onSelect={ appendTerm } />
 		</Stack>

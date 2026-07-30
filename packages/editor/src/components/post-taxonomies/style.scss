@@ -23,48 +23,6 @@
 	margin-left: $grid-unit-20;
 }
 
-// Turns the combobox chips container into the field itself, so that the
-// selected terms sit inside the input alongside the text cursor.
-.editor-post-taxonomies__flat-term-selector {
-	flex-wrap: wrap;
-	align-items: center;
-	gap: var(--wpds-dimension-gap-xs);
-	height: auto;
-	min-height: var(--wpds-dimension-size-lg);
-	padding: var(--wpds-dimension-padding-xs);
-	cursor: text;
-
-	&:focus-within {
-		outline: var(--wpds-border-width-focus) solid var(--wpds-color-stroke-focus);
-		outline-offset: var(--wpds-border-width-focus);
-	}
-}
-
-// The type selector is needed to override the wp-admin form styles.
-input[type="text"].editor-post-taxonomies__flat-term-selector-input {
-	flex: 1;
-	min-width: 50px;
-	min-height: var(--wpds-dimension-size-sm);
-	margin: 0;
-	padding: 0 var(--wpds-dimension-padding-xs);
-	border: 0;
-	box-shadow: none;
-	background: transparent;
-	color: inherit;
-	font-family: inherit;
-	font-size: inherit;
-	line-height: 1;
-
-	&::placeholder {
-		color: var(--wpds-color-foreground-interactive-neutral-disabled);
-	}
-
-	&:focus {
-		outline: none;
-		box-shadow: none;
-	}
-}
-
 .editor-post-taxonomies__flat-term-most-used {
 	.editor-post-taxonomies__flat-term-most-used-label {
 		margin-bottom: $grid-unit-05;

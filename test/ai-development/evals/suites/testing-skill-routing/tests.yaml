@@ -13,6 +13,13 @@
       - type: trajectory:step-count
         value:
             type: command
+            pattern: '*skills/testing/SKILL.md*'
+            min: 1
+        metric: Read the testing skill
+
+      - type: trajectory:step-count
+        value:
+            type: command
             pattern: '*skills/testing/references/e2e.md*'
             min: 1
         metric: Read the e2e reference

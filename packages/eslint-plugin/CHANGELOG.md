@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### Bug Fixes
+
+-   Apply test-only DOM global exceptions to both JavaScript and JSX test files.
+
 ## 25.7.0 (2026-07-14)
 
 ## 25.6.0 (2026-07-01)

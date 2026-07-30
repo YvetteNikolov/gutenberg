@@ -3,6 +3,7 @@
  */
 import { __, sprintf } from '@wordpress/i18n';
 import { MenuGroup } from '@wordpress/components';
+import deprecated from '@wordpress/deprecated';
 
 /**
  * External dependencies
@@ -15,7 +16,6 @@ import clsx from 'clsx';
 import LinkControlSearchCreate from './search-create-button';
 import LinkControlSearchItem from './search-item';
 import { CREATE_TYPE, LINK_ENTRY_TYPES } from './constants';
-import deprecated from '@wordpress/deprecated';
 
 function LinkControlSearchResults( {
 	withCreateSuggestion,

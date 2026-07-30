@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### Enhancements
+
+-   Resolve `.jsx` modules when generating package documentation.
+
 ## 2.51.0 (2026-07-14)
 
 ## 2.50.0 (2026-07-01)

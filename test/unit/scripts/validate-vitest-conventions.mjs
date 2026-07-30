@@ -42,7 +42,7 @@ const migration = JSON.parse(
 const vitestTests = getVitestTests( ROOT_DIR, migration );
 const vitestInfrastructure = [
 	'test/unit/vitest.config.mjs',
-	...glob( 'test/unit/config/**/*.vitest.{js,mjs,ts,tsx}', {
+	...glob( 'test/unit/config/**/*.vitest.{js,jsx,mjs,ts,tsx}', {
 		cwd: ROOT_DIR,
 		nodir: true,
 	} ),

@@ -312,7 +312,7 @@ export default function BackgroundImagePanel( {
 	// Get current gradient value, decoding preset slug references.
 	// Fall back to color.gradient for legacy blocks that haven't migrated
 	// to background.gradient yet (mirrors block inspector fallback in
-	// packages/block-editor/src/hooks/background.js).
+	// packages/block-editor/src/hooks/background.jsx).
 	const currentGradient = decodeValue(
 		value?.background?.gradient ?? value?.color?.gradient
 	);

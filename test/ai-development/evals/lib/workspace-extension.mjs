@@ -108,6 +108,10 @@ export async function extensionHook( hookName, context ) {
 		return {
 			test: {
 				...context.test,
+				vars: {
+					...context.test.vars,
+					__workspace: workspace,
+				},
 				options: {
 					...context.test.options,
 					working_dir: workspace,

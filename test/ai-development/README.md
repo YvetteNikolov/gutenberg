@@ -10,6 +10,36 @@ The standalone `evals/` package uses [Promptfoo](https://www.promptfoo.dev/docs/
 
 Promptfoo runs the prompt × provider × test × repeat matrix. Its standard lifecycle hooks create a clean Git workspace from the committed `HEAD` before each row and remove it afterward. The native Claude and Codex providers receive that directory as `working_dir`.
 
+```text
+prompt × provider × test × repeat (parallel container)
+                 │
+                 ▼
+   beforeEach: create temporary repo
+      from HEAD and hide eval files
+                 │
+                 ▼
+       coding agent changes files
+                 │
+       ┌─────────┴─────────┐
+       ▼                   ▼
+  tool calls         agent response 
+                        + Git diff  
+       │                   │
+       └─────────┬─────────┘
+                 ▼
+         Promptfoo assertions
+    ┌────────────┼────────────┐
+    ▼            ▼            ▼
+ tool-call  deterministic  agent-rubric
+  checks     code checks     review
+    └────────────┼────────────┘
+                 ▼
+       result row and metrics
+                 │
+                 ▼
+      afterEach: delete workspace
+```
+
 The subject workspace excludes `test/ai-development/evals/`, so the agent cannot inspect its prompt configuration or assertions. Uncommitted repository changes are not included.
 
 See Promptfoo's [coding-agent guide](https://www.promptfoo.dev/docs/guides/evaluate-coding-agents/) and [extension hooks](https://www.promptfoo.dev/docs/configuration/reference/#extension-hooks).

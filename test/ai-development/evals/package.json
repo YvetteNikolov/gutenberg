@@ -16,7 +16,7 @@
 		"url": "https://github.com/WordPress/gutenberg/issues"
 	},
 	"scripts": {
-		"validate": "for c in suites/*/promptfooconfig.yaml; do promptfoo validate config --config \"$c\" || exit 1; done",
+		"validate": "for c in specs/*/*.test.yaml; do promptfoo validate config --config \"$c\" || exit 1; done",
 		"eval": "PROMPTFOO_EVAL_TIMEOUT_MS=180000 promptfoo eval --config lib/promptfooconfig.yaml",
 		"view": "promptfoo view"
 	},

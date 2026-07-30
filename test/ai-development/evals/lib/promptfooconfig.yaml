@@ -1,4 +1,4 @@
-# Tracing configuration shared by every evaluation suite.
+# Tracing configuration shared by every evaluation spec.
 tracing:
     enabled: true
     failOnReceiverStartFailure: true

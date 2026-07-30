@@ -46,7 +46,7 @@ See Promptfoo's [coding-agent guide](https://www.promptfoo.dev/docs/guides/evalu
 
 ### Grading code changes
 
-Promptfoo's built-in trajectory assertions deterministically check tool calls, including which testing references the agent read or skipped. Its built-in `agent-rubric` receives read-only access to the live workspace, where the grading agent inspects Git status, the diff, relevant documentation, and changed files against the suite's rubric. This keeps code review inside Promptfoo without relying on the subject agent's final message or custom diff processing.
+Promptfoo's built-in trajectory assertions deterministically check tool calls, including which testing references the agent read or skipped. Its built-in `agent-rubric` receives read-only access to the live workspace, where the grading agent inspects Git status, the diff, relevant documentation, and changed files against the spec's rubric. This keeps code review inside Promptfoo without relying on the subject agent's final message or custom diff processing.
 
 ## Setup
 
@@ -68,18 +68,18 @@ Run from the repository root:
 # Validate configuration without model calls.
 npm --prefix test/ai-development/evals run validate
 
-# Run every suite and provider.
-npm run test:agent-evals -- --config 'suites/*/promptfooconfig.yaml'
+# Run every spec and provider.
+npm run test:agent-evals -- --config 'specs/*/*.test.yaml'
 
-# Run one suite.
-npm run test:agent-evals -- --config suites/SUITE_NAME/promptfooconfig.yaml
+# Run one spec.
+npm run test:agent-evals -- --config specs/SPEC_GROUP/TEST_NAME.test.yaml
 
 # Run one provider.
-npm run test:agent-evals -- --config suites/SUITE_NAME/promptfooconfig.yaml --filter-providers codex
-npm run test:agent-evals -- --config suites/SUITE_NAME/promptfooconfig.yaml --filter-providers claude
+npm run test:agent-evals -- --config specs/SPEC_GROUP/TEST_NAME.test.yaml --filter-providers codex
+npm run test:agent-evals -- --config specs/SPEC_GROUP/TEST_NAME.test.yaml --filter-providers claude
 
 # Override repeats.
-npm run test:agent-evals -- --config suites/SUITE_NAME/promptfooconfig.yaml --repeat 3
+npm run test:agent-evals -- --config specs/SPEC_GROUP/TEST_NAME.test.yaml --repeat 3
 
 # Open the local results viewer.
 npm --prefix test/ai-development/evals run view
@@ -98,18 +98,15 @@ evals/
 │   └── workspace-extension.mjs     workspace lifecycle
 ├── package.json
 ├── package-lock.json
-└── suites/SUITE_NAME/
-    ├── promptfooconfig.yaml        providers, tracing, permissions, repeats
-    ├── prompt.md                   task shown to the agent
-    └── tests.yaml                  assertions and named metrics
+└── specs/SPEC_GROUP/
+    └── TEST_NAME.test.yaml         prompt, assertions, and spec configuration
 ```
 
 ## Authoring
 
-For each suite:
+For each spec:
 
 1. State the narrow claim the evaluation supports.
-2. Write a realistic prompt that does not reveal the expected behavior.
-3. Reference the shared providers and configure tracing in `promptfooconfig.yaml`.
-4. Put cases and named metrics in `tests.yaml`.
-5. Validate, run one provider once, then run the intended matrix with repeats.
+2. Add a `TEST_NAME.test.yaml` file containing a realistic agent prompt, shared
+   configuration references, cases, and named metrics.
+3. Validate, run one provider once, then run the intended matrix with repeats.

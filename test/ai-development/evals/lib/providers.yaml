@@ -1,4 +1,4 @@
-# Coding agents shared by every evaluation suite.
+# Coding agents shared by every evaluation spec.
 - id: anthropic:claude-agent-sdk
   label: claude
   config:

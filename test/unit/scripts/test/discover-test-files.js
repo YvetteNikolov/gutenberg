@@ -10,6 +10,7 @@ import {
 	assertVitestProjectNames,
 	findOverlappingVitestProjectTests,
 } from '../discover-test-files.mjs';
+import { hasTestEnvironmentOverride } from '../vitest-conventions.mjs';
 
 describe( 'Vitest project routing', () => {
 	test( 'accepts the browser, jsdom, and node projects', () => {
@@ -56,5 +57,30 @@ describe( 'Vitest project routing', () => {
 		).toEqual( [
 			'packages/components/src/test/index.js: browser, jsdom',
 		] );
+	} );
+
+	test( 'detects per-file Vitest and Jest environment overrides', () => {
+		const vitestEnvironment = [ '@vitest', '-environment' ].join( '' );
+		const jestEnvironment = [ '@jest', '-environment' ].join( '' );
+
+		expect(
+			hasTestEnvironmentOverride( `// ${ vitestEnvironment } node` )
+		).toBe( true );
+		expect(
+			hasTestEnvironmentOverride( `/** ${ jestEnvironment } jsdom */` )
+		).toBe( true );
+	} );
+
+	test( 'allows per-file environment options', () => {
+		const vitestEnvironmentOptions = [
+			'@vitest',
+			'-environment-options',
+		].join( '' );
+
+		expect(
+			hasTestEnvironmentOverride(
+				`// ${ vitestEnvironmentOptions } { "url": "https://example.com" }`
+			)
+		).toBe( false );
 	} );
 } );

@@ -16,6 +16,25 @@ import wpBuildConfig from '../../packages/wp-build/eslint-overrides.cjs';
 const require = createRequire( import.meta.url );
 const rootDir = resolve( import.meta.dirname, '../..' );
 const wpPlugin = require( '@wordpress/eslint-plugin' );
+const testMigration = require(
+	join( rootDir, 'test/unit/test-migration.json' )
+);
+const vitestTestPatterns = [
+	...new Set(
+		Object.keys( testMigration.vitest.projects ).flatMap(
+			( projectName ) => {
+				const project = testMigration.vitest.projects[ projectName ];
+				return [
+					...project.files,
+					...testMigration.added.vitest[ projectName ],
+					...project.directories.map(
+						( directory ) => `${ directory }/**/*.[tj]s?(x)`
+					),
+				];
+			}
+		)
+	),
+];
 
 // Prefer the installed React version for linting, but fall back to the detected version.
 let reactVersion = 'detect';
@@ -443,7 +462,11 @@ export default dedupePlugins( [
 			'**/test/**/*.{js,jsx}',
 			'**/__tests__/**/*.{js,jsx}',
 		],
-		ignores: [ 'test/e2e/**/*.{js,jsx}', 'test/performance/**/*.{js,jsx}' ],
+		ignores: [
+			'test/e2e/**/*.{js,jsx}',
+			'test/performance/**/*.{js,jsx}',
+			...vitestTestPatterns,
+		],
 	} ) ),
 
 	// Override: Test files — jest-dom, testing-library, jest recommended.
@@ -454,7 +477,7 @@ export default dedupePlugins( [
 			'test/e2e/**/*.[tj]s?(x)',
 			'test/performance/**/*.[tj]s?(x)',
 			'test/storybook-playwright/**/*.[tj]s?(x)',
-			'test/unit/browser/**/*.[tj]s?(x)',
+			...vitestTestPatterns,
 		],
 	},
 	{
@@ -464,7 +487,7 @@ export default dedupePlugins( [
 			'test/e2e/**/*.[tj]s?(x)',
 			'test/performance/**/*.[tj]s?(x)',
 			'test/storybook-playwright/**/*.[tj]s?(x)',
-			'test/unit/browser/**/*.[tj]s?(x)',
+			...vitestTestPatterns,
 		],
 	},
 	{
@@ -474,7 +497,7 @@ export default dedupePlugins( [
 			'test/e2e/**/*.[tj]s?(x)',
 			'test/performance/**/*.[tj]s?(x)',
 			'test/storybook-playwright/**/*.[tj]s?(x)',
-			'test/unit/browser/**/*.[tj]s?(x)',
+			...vitestTestPatterns,
 		],
 		rules: {
 			...jestPlugin.configs[ 'flat/recommended' ].rules,

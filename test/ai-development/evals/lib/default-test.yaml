@@ -1,6 +1,13 @@
 # Options shared by every evaluation case.
 options:
     bustCache: true
+    prefix: |
+        This task runs in an isolated evaluation workspace and npm is not
+        available. Do not try to build. Do not start or try to start wp-env,
+        wp-env-test, Docker, development servers, or other long-running services.
+        Accomplish your requested task and I will run and test the build on my
+        own environment.
+
     # The beforeEach extension fills in working_dir and the dynamic filesystem
     # allowlists. Codex ignores this Claude-specific sandbox key.
     sandbox:

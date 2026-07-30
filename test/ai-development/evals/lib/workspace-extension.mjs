@@ -104,6 +104,7 @@ export async function extensionHook( hookName, context ) {
 	if ( hookName === 'beforeEach' ) {
 		const workspace = await createWorkspace();
 		const sandbox = context.test.options?.sandbox;
+		const gradingProvider = context.test.options?.provider;
 
 		return {
 			test: {
@@ -115,6 +116,17 @@ export async function extensionHook( hookName, context ) {
 				options: {
 					...context.test.options,
 					working_dir: workspace,
+					...( gradingProvider && typeof gradingProvider === 'object'
+						? {
+								provider: {
+									...gradingProvider,
+									config: {
+										...gradingProvider.config,
+										working_dir: workspace,
+									},
+								},
+						  }
+						: {} ),
 					...( sandbox
 						? {
 								sandbox: {

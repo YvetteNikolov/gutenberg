@@ -5,6 +5,9 @@
 # lives in ../../lib/promptfooconfig.yaml.
 description: Verify an e2e task routes through the testing skill to the e2e reference only
 
+tracing:
+    $ref: lib/promptfooconfig.yaml#/tracing
+
 prompts:
     - label: Add an e2e test
       raw: >

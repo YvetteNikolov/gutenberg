@@ -4,7 +4,7 @@
 
 ### Internal
 
--   Rename the JSX-bearing SVG source entry point from `.js` to `.jsx`.
+-   Rename the JSX-bearing SVG source entry point from `.js` to `.jsx` ([#80990](https://github.com/WordPress/gutenberg/pull/80990)).
 
 ## 4.51.0 (2026-07-14)
 

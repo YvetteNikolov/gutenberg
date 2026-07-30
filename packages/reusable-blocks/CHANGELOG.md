@@ -4,7 +4,7 @@
 
 ### Internal
 
--   Rename JSX-bearing Reusable Blocks Menu Item source files from `.js` to `.jsx`.
+-   Rename JSX-bearing Reusable Blocks Menu Item source files from `.js` to `.jsx` ([#80990](https://github.com/WordPress/gutenberg/pull/80990)).
 
 ## 5.51.0 (2026-07-14)
 

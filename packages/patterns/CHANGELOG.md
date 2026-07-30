@@ -4,7 +4,7 @@
 
 ### Internal
 
--   Rename JSX-bearing source files to use the `.jsx` extension.
+-   Rename JSX-bearing source files to use the `.jsx` extension ([#80990](https://github.com/WordPress/gutenberg/pull/80990)).
 
 ## 2.51.0 (2026-07-14)
 

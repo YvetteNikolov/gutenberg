@@ -18,7 +18,7 @@
 
 ### Internal
 
--   Migrate unit tests from Jest to Vitest.
+-   Migrate unit tests from Jest to Vitest ([#80992](https://github.com/WordPress/gutenberg/pull/80992)).
 -   Update `date-fns` to 4.4.0 ([#80763](https://github.com/WordPress/gutenberg/pull/80763)).
 
 ## 14.51.0 (2026-07-14)

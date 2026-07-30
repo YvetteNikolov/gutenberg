@@ -4,7 +4,7 @@
 
 ### Internal
 
--   Allow the shared parser-test helpers to receive explicit runner APIs and use Node ESM imports.
+-   Allow the shared parser-test helpers to receive explicit runner APIs and use Node ESM imports ([#80992](https://github.com/WordPress/gutenberg/pull/80992)).
 
 ## 5.51.0 (2026-07-14)
 

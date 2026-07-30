@@ -4,7 +4,7 @@
 
 ### Internal
 
--   Rename the JSX-bearing package entry point from `.js` to `.jsx`.
+-   Rename the JSX-bearing package entry point from `.js` to `.jsx` ([#80990](https://github.com/WordPress/gutenberg/pull/80990)).
 
 ## 1.51.0 (2026-07-14)
 

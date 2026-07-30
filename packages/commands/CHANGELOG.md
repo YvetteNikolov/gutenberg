@@ -4,7 +4,7 @@
 
 ### Internal
 
--   Rename the JSX-bearing Command Menu source file from `.js` to `.jsx`.
+-   Rename the JSX-bearing Command Menu source file from `.js` to `.jsx` ([#80990](https://github.com/WordPress/gutenberg/pull/80990)).
 -   Update `exports` to use subpath patterns instead of deprecated trailing `/` folder mappings ([#80270](https://github.com/WordPress/gutenberg/pull/80270)).
 
 ## 1.51.0 (2026-07-14)
@@ -45,6 +45,7 @@
 ## 1.41.0 (2026-03-04)
 
 ## 1.40.0 (2026-02-18)
+
 -   Add `category` property to command config, used to visually differentiate commands in the Command Palette.
 
 ## 1.39.0 (2026-01-29)

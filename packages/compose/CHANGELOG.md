@@ -4,8 +4,8 @@
 
 ### Code Quality
 
--   Rename JSX-bearing higher-order component source files from `.js` to `.jsx`.
--   Make the `basePipe` TypeScript signature reflect its existing support for arrays of functions, and use an explicitly browser-scoped timer in `useFocusOutside`.
+-   Rename JSX-bearing higher-order component source files from `.js` to `.jsx` ([#80990](https://github.com/WordPress/gutenberg/pull/80990)).
+-   Make the `basePipe` TypeScript signature reflect its existing support for arrays of functions, and use an explicitly browser-scoped timer in `useFocusOutside` ([#80992](https://github.com/WordPress/gutenberg/pull/80992)).
 
 ## 8.4.0 (2026-07-14)
 

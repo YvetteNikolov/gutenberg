@@ -771,7 +771,7 @@ describe( 'SyncManager', () => {
 				mockHandlers
 			);
 
-			jest.clearAllMocks();
+			vi.clearAllMocks();
 
 			// With no remote peers present, the first update is deferred.
 			manager.update(
@@ -955,7 +955,7 @@ describe( 'SyncManager', () => {
 		it( 'includes updates issued in the same tick in the snapshot', async () => {
 			const { manager } = await loadEntityCapturingDoc();
 
-			jest.clearAllMocks();
+			vi.clearAllMocks();
 			mockSyncConfig.applyChangesToCRDTDoc.mockImplementation(
 				( ydoc, changes ) => {
 					const recordMap = ydoc.getMap( CRDT_RECORD_MAP_KEY );

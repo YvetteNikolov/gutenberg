@@ -3,7 +3,7 @@
  */
 import * as Y from 'yjs';
 import * as buffer from 'lib0/buffer';
-import { describe, expect, it } from '@jest/globals';
+import { describe, expect, it } from 'vitest';
 
 /**
  * Internal dependencies

@@ -111,9 +111,6 @@ jobs:
             - name: Install Chromium for Vitest Browser Mode
               run: npx playwright install chromium --with-deps
 
-            - name: Install Chromium for Vitest Browser Mode
-              run: npx playwright install chromium --with-deps
-
             - name: Run the migrated Vitest partition
               env:
                   SHARD: ${{ matrix.shard }}

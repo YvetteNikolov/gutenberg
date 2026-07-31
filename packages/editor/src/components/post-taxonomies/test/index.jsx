@@ -7,7 +7,10 @@ import { render, screen } from '@testing-library/react';
 /**
  * WordPress dependencies
  */
-import { store as coreStore } from '@wordpress/core-data';
+import {
+	privateApis as coreDataPrivateApis,
+	store as coreStore,
+} from '@wordpress/core-data';
 import { dispatch, select } from '@wordpress/data';
 import { store as editorStore } from '@wordpress/editor';
 
@@ -15,6 +18,9 @@ import { store as editorStore } from '@wordpress/editor';
  * Internal dependencies
  */
 import PostTaxonomies from '../';
+import { unlock } from '../../../lock-unlock';
+
+const { RECEIVE_INTERMEDIATE_RESULTS } = unlock( coreDataPrivateApis );
 
 describe( 'PostTaxonomies', () => {
 	const genresTaxonomy = {
@@ -52,6 +58,7 @@ describe( 'PostTaxonomies', () => {
 		order: 'asc',
 		_fields: 'id,name,parent',
 		context: 'view',
+		[ RECEIVE_INTERMEDIATE_RESULTS ]: true,
 	};
 
 	const hidesUI = [

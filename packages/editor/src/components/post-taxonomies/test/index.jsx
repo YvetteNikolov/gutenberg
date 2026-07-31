@@ -8,7 +8,7 @@ import { render, screen } from '@testing-library/react';
  * WordPress dependencies
  */
 import { store as coreStore } from '@wordpress/core-data';
-import { select } from '@wordpress/data';
+import { dispatch, select } from '@wordpress/data';
 import { store as editorStore } from '@wordpress/editor';
 
 /**
@@ -46,6 +46,13 @@ describe( 'PostTaxonomies', () => {
 	};
 
 	const allTaxonomies = [ genresTaxonomy, categoriesTaxonomy ];
+	const termsQuery = {
+		per_page: -1,
+		orderby: 'name',
+		order: 'asc',
+		_fields: 'id,name,parent',
+		context: 'view',
+	};
 
 	const hidesUI = [
 		genresTaxonomy,
@@ -96,6 +103,24 @@ describe( 'PostTaxonomies', () => {
 				}
 			}
 		);
+
+		const coreDataDispatch = dispatch( coreStore );
+		coreDataDispatch.finishResolution( 'getEntityRecords', [
+			'root',
+			'taxonomy',
+		] );
+		for ( const { slug } of allTaxonomies ) {
+			coreDataDispatch.finishResolution( 'getEntityRecord', [
+				'root',
+				'taxonomy',
+				slug,
+			] );
+			coreDataDispatch.finishResolution( 'getEntityRecords', [
+				'taxonomy',
+				slug,
+				termsQuery,
+			] );
+		}
 	} );
 
 	it( 'should render no children if taxonomy data not available', () => {

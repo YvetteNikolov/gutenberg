@@ -123,7 +123,7 @@ function MediaEditorSidebar( { tabs }: { tabs: EditorTab[] } ) {
 			className="media-editor__sidebar"
 			panelClassName="media-editor__sidebar-panel"
 			headerClassName="media-editor__sidebar-header"
-			// @ts-expect-error @wordpress/interface currently narrows the
+			// @ts-ignore @wordpress/interface currently narrows the
 			// default label to one literal. See the declaration follow-up in #80855.
 			closeLabel={ __( 'Close media panel' ) }
 			header={
@@ -175,7 +175,7 @@ function HeaderActions( {
 				/>
 			) }
 			{
-				// @ts-expect-error @wordpress/interface currently treats the
+				// @ts-ignore @wordpress/interface currently treats the
 				// optional className prop as required. See #80855.
 				<PinnedItems.Slot scope="media-editor" />
 			}
@@ -598,7 +598,7 @@ function MediaEditorContent( {
 				>
 					<MediaEditorSidebar tabs={ tabs } />
 					{
-						// @ts-expect-error @wordpress/interface currently treats
+						// @ts-ignore @wordpress/interface currently treats
 						// optional skeleton slots as required. See #80855.
 						<InterfaceSkeleton
 							className="media-editor__skeleton"

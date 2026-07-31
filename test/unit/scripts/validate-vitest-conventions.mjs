@@ -406,6 +406,7 @@ for ( const projectName of VITEST_PROJECT_NAMES ) {
 					"\texport const store: import('@wordpress/data').StoreDescriptor<import('@wordpress/data').ReduxStoreConfig<any, Record<string, (...args: any[]) => any>, Record<string, (...args: any[]) => any>>>;",
 					'}',
 					"declare module '@wordpress/commands';",
+					"declare module '@wordpress/interface';",
 					"declare module 'deep-freeze' { export default function deepFreeze<T>(value: T): T; }",
 				].join( '\n' )
 			);

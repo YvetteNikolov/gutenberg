@@ -340,8 +340,8 @@ for ( const projectName of VITEST_PROJECT_NAMES ) {
 		const temporaryDirectory = mkdtempSync(
 			path.join(
 				os.tmpdir(),
-					`gutenberg-vitest-${ projectName }-typecheck-`
-				)
+				`gutenberg-vitest-${ projectName }-typecheck-`
+			)
 		);
 		const configPath = path.join( temporaryDirectory, 'tsconfig.json' );
 		const compatibilityTypesPath = path.join(

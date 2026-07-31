@@ -74,6 +74,9 @@ function createRegistryWithStores() {
 	registry
 		.dispatch( coreDataStore )
 		.receiveEntityRecords( 'postType', 'post', [ aSinglePost ] );
+	registry
+		.dispatch( coreDataStore )
+		.finishResolution( 'getEntityRecord', [ 'postType', 'post', 1 ] );
 
 	return registry;
 }

@@ -4,6 +4,10 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 
+vi.mock( '@wordpress/api-fetch', () => ( {
+	default: vi.fn().mockResolvedValue( [] ),
+} ) );
+
 /**
  * WordPress dependencies
  */

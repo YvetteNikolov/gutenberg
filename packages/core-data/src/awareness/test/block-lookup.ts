@@ -48,7 +48,7 @@ vi.mock( import( '@wordpress/data' ), async ( importOriginal ) => ( {
 		} ) ) ) as unknown as typeof import('@wordpress/data').useSelect,
 } ) );
 
-// @ts-expect-error @wordpress/block-editor does not publish TypeScript declarations.
+// @ts-ignore @wordpress/block-editor does not publish TypeScript declarations.
 vi.mock( import( '@wordpress/block-editor' ), () => ( {
 	store: 'core/block-editor',
 } ) );

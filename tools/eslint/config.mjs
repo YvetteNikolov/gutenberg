@@ -40,10 +40,12 @@ const vitestTestPatterns = [
 		),
 	] ),
 ];
-const vitestBrowserTestPatterns = getVitestProjectPatterns( 'browser' );
+const vitestBrowserTestPatterns = [ '**/*.browser.@(test|spec).[tj]s?(x)' ];
 const vitestJsdomTestPatterns = getVitestProjectPatterns( 'jsdom' );
-const vitestJsdomTestIgnores =
-	testMigration.vitest.projects.jsdom.excludedFiles;
+const vitestJsdomTestIgnores = [
+	...testMigration.vitest.projects.jsdom.excludedFiles,
+	...vitestBrowserTestPatterns,
+];
 
 // Prefer the installed React version for linting, but fall back to the detected version.
 let reactVersion = 'detect';

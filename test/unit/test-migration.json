@@ -2,17 +2,7 @@
 	"vitest": {
 		"projects": {
 			"browser": {
-				"files": [
-					"packages/block-editor/src/components/global-styles/inheritance/test/index.jsx",
-					"packages/components/src/button/test/index.tsx",
-					"packages/components/src/circular-option-picker/test/index.tsx",
-					"packages/components/src/custom-select-control-v2/test/index.tsx",
-					"packages/components/src/custom-select-control/test/index.tsx",
-					"packages/components/src/search-control/test/index.tsx",
-					"packages/components/src/snackbar/test/index.tsx",
-					"packages/components/src/snackbar/test/list.tsx",
-					"packages/components/src/tab-panel/test/index.tsx"
-				],
+				"files": [],
 				"directories": [],
 				"excludedFiles": []
 			},
@@ -98,15 +88,6 @@
 					"test/integration"
 				],
 				"excludedFiles": [
-					"packages/block-editor/src/components/global-styles/inheritance/test/index.jsx",
-					"packages/components/src/button/test/index.tsx",
-					"packages/components/src/circular-option-picker/test/index.tsx",
-					"packages/components/src/custom-select-control-v2/test/index.tsx",
-					"packages/components/src/custom-select-control/test/index.tsx",
-					"packages/components/src/search-control/test/index.tsx",
-					"packages/components/src/snackbar/test/index.tsx",
-					"packages/components/src/snackbar/test/list.tsx",
-					"packages/components/src/tab-panel/test/index.tsx",
 					"packages/compose/src/hooks/use-media-query/test/ssr.jsx",
 					"packages/theme/src/stylelint-plugins/test/no-setting-wpds-custom-properties.test.ts",
 					"packages/theme/src/stylelint-plugins/test/no-token-fallback-values.test.ts",

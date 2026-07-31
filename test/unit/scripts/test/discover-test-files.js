@@ -80,14 +80,17 @@ describe( 'Vitest project routing', () => {
 	} );
 
 	test( 'detects Browser Mode imports', () => {
+		const vitestBrowser = [ 'vitest', '/browser' ].join( '' );
+		const vitestBrowserReact = [ 'vitest', '-browser-react' ].join( '' );
+
 		expect(
 			hasBrowserModeImport(
-				"import { userEvent } from 'vitest/browser';"
+				`import { userEvent } from '${ vitestBrowser }';`
 			)
 		).toBe( true );
 		expect(
 			hasBrowserModeImport(
-				"import { render } from 'vitest-browser-react';"
+				`import { render } from '${ vitestBrowserReact }';`
 			)
 		).toBe( true );
 		expect(

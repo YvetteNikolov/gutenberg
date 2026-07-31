@@ -20,20 +20,19 @@ const testMigration = require(
 	join( rootDir, 'test/unit/test-migration.json' )
 );
 const vitestTestPatterns = [
-	...new Set(
-		Object.keys( testMigration.vitest.projects ).flatMap(
-			( projectName ) => {
-				const project = testMigration.vitest.projects[ projectName ];
+	...new Set( [
+		'**/*.browser.@(test|spec).[tj]s?(x)',
+		...Object.values( testMigration.vitest.projects ).flatMap(
+			( project ) => {
 				return [
 					...project.files,
-					...testMigration.added.vitest[ projectName ],
 					...project.directories.map(
 						( directory ) => `${ directory }/**/*.[tj]s?(x)`
 					),
 				];
 			}
-		)
-	),
+		),
+	] ),
 ];
 
 // Prefer the installed React version for linting, but fall back to the detected version.

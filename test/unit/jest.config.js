@@ -14,9 +14,9 @@ const escapeRegExp = ( value ) =>
 	value.replace( /[.*+?^${}()|[\]\\]/g, '\\$&' );
 const vitestProjects = Object.values( testMigration.vitest.projects );
 const vitestTestPathIgnorePatterns = [
-	...vitestProjects.flatMap( ( project ) => project.files ).map(
-		( testPath ) => `<rootDir>/${ escapeRegExp( testPath ) }$`
-	),
+	...vitestProjects
+		.flatMap( ( project ) => project.files )
+		.map( ( testPath ) => `<rootDir>/${ escapeRegExp( testPath ) }$` ),
 	...vitestProjects
 		.flatMap( ( project ) => project.directories )
 		.map(

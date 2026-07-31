@@ -9,7 +9,7 @@ import { fileURLToPath } from 'node:url';
  */
 import react from '@vitejs/plugin-react-swc';
 import { playwright } from '@vitest/browser-playwright';
-import globPackage from 'glob';
+import fastGlob from 'fast-glob';
 import { defineConfig } from 'vitest/config';
 
 /**
@@ -22,7 +22,7 @@ const ROOT_DIR = path.resolve(
 	'../..'
 );
 const vitestTests = getVitestTestsByProject( ROOT_DIR );
-const { sync: glob } = globPackage;
+const { sync: glob } = fastGlob;
 const reporters = [ 'default' ];
 const styleMockAlias = {
 	find: /^.*\.(?:css|scss)$/,

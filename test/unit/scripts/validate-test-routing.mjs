@@ -16,7 +16,15 @@ import globPackage from 'glob';
 /**
  * Internal dependencies
  */
-import { discoverTestFiles, getVitestTests } from './discover-test-files.mjs';
+import {
+	assertVitestProjectNames,
+	discoverTestFiles,
+	findOverlappingVitestProjectTests,
+	getVitestTests,
+	getVitestTestsByProject,
+	isBrowserTestPath,
+	VITEST_PROJECT_NAMES,
+} from './discover-test-files.mjs';
 
 const require = createRequire( import.meta.url );
 const ROOT_DIR = path.resolve(
@@ -25,6 +33,12 @@ const ROOT_DIR = path.resolve(
 );
 const JEST_CONFIG = 'test/unit/jest.config.js';
 const VITEST_CONFIG = 'test/unit/vitest.config.mjs';
+const VITEST_CONFIG_PROJECT_NAMES = {
+	browser: 'browser',
+	// Preserve the Flakiness.io identity used before project routing.
+	jsdom: 'vitest',
+	node: 'node',
+};
 const manifest = JSON.parse(
 	readFileSync(
 		path.join( ROOT_DIR, 'test/unit/test-migration.json' ),
@@ -73,6 +87,7 @@ function listTests( packageName, args ) {
 			.trim()
 			.split( /\r?\n/ )
 			.filter( Boolean )
+			.map( ( testPath ) => testPath.replace( /^\[[^\]]+\]\s+/, '' ) )
 			.map( normalizeTestPath )
 	);
 }
@@ -93,55 +108,63 @@ function assertUniquePaths( label, testPaths ) {
 	}
 }
 
-function isWithinDirectory( testPath, directoryPath ) {
-	return (
-		testPath === directoryPath ||
-		testPath.startsWith( `${ directoryPath }/` )
-	);
-}
+assertVitestProjectNames( 'vitest.projects', manifest.vitest.projects );
 
-const jestTests = listTests( 'jest', [
-	'--config',
-	JEST_CONFIG,
-	'--listTests',
-] );
-const vitestTests = existsSync( path.join( ROOT_DIR, VITEST_CONFIG ) )
-	? listTests( 'vitest', [
-			'list',
-			'--config',
-			VITEST_CONFIG,
-			'--filesOnly',
-	  ] )
-	: new Set();
-
-const migratedTestFiles = manifest.vitest.files;
-const migratedDirectories = manifest.vitest.directories;
-
-assertUniquePaths( 'vitest.files', migratedTestFiles );
-assertUniquePaths( 'vitest.directories', migratedDirectories );
-
-const overlappingManifestEntries = [
-	...migratedTestFiles.filter( ( testPath ) =>
-		migratedDirectories.some( ( directoryPath ) =>
-			isWithinDirectory( testPath, directoryPath )
-		)
-	),
-	...migratedDirectories.filter( ( directoryPath, index ) =>
-		migratedDirectories.some(
-			( otherDirectoryPath, otherIndex ) =>
-				otherIndex !== index &&
-				isWithinDirectory( directoryPath, otherDirectoryPath )
-		)
-	),
-];
 assert.deepEqual(
-	overlappingManifestEntries,
+	[
+		...manifest.vitest.projects.browser.files,
+		...manifest.vitest.projects.browser.directories,
+	],
 	[],
-	`Vitest migration manifest entries must be disjoint:\n${ overlappingManifestEntries.join(
+	'Browser Mode ownership is derived from *.browser.test.* filenames, not manifest entries.'
+);
+
+const browserTestsAssignedToOtherProjects = [ 'jsdom', 'node' ].flatMap(
+	( projectName ) =>
+		manifest.vitest.projects[ projectName ].files
+			.filter( isBrowserTestPath )
+			.map( ( testPath ) => `${ projectName }: ${ testPath }` )
+);
+assert.deepEqual(
+	browserTestsAssignedToOtherProjects,
+	[],
+	`Browser Mode filenames cannot be assigned to jsdom or Node:\n${ browserTestsAssignedToOtherProjects.join(
 		'\n'
 	) }`
 );
 
+for ( const projectName of VITEST_PROJECT_NAMES ) {
+	assertUniquePaths(
+		`vitest.projects.${ projectName }.files`,
+		manifest.vitest.projects[ projectName ].files
+	);
+	assertUniquePaths(
+		`vitest.projects.${ projectName }.directories`,
+		manifest.vitest.projects[ projectName ].directories
+	);
+}
+
+const expectedVitestTestsByProject = getVitestTestsByProject(
+	ROOT_DIR,
+	manifest
+);
+const overlappingProjectTests = findOverlappingVitestProjectTests(
+	expectedVitestTestsByProject
+);
+assert.deepEqual(
+	overlappingProjectTests,
+	[],
+	`Vitest tests are owned by multiple projects:\n${ overlappingProjectTests.join(
+		'\n'
+	) }`
+);
+
+const migratedTestFiles = Object.values( manifest.vitest.projects ).flatMap(
+	( project ) => project.files
+);
+const migratedDirectories = Object.values( manifest.vitest.projects ).flatMap(
+	( project ) => project.directories
+);
 const invalidMigratedEntries = [
 	...migratedTestFiles.filter(
 		( testPath ) => ! existsSync( path.join( ROOT_DIR, testPath ) )
@@ -159,6 +182,46 @@ assert.deepEqual(
 	) }`
 );
 
+const jestTests = listTests( 'jest', [
+	'--config',
+	JEST_CONFIG,
+	'--listTests',
+] );
+const vitestTestsByProject = Object.fromEntries(
+	VITEST_PROJECT_NAMES.map( ( projectName ) => [
+		projectName,
+		existsSync( path.join( ROOT_DIR, VITEST_CONFIG ) )
+			? listTests( 'vitest', [
+					'list',
+					'--config',
+					VITEST_CONFIG,
+					'--project',
+					VITEST_CONFIG_PROJECT_NAMES[ projectName ],
+					'--filesOnly',
+					'--passWithNoTests',
+			  ] )
+			: new Set(),
+	] )
+);
+const vitestTests = new Set(
+	Object.values( vitestTestsByProject ).flatMap( ( projectTests ) => [
+		...projectTests,
+	] )
+);
+
+for ( const projectName of VITEST_PROJECT_NAMES ) {
+	assert.deepEqual(
+		[ ...vitestTestsByProject[ projectName ] ].sort(),
+		expectedVitestTestsByProject[ projectName ],
+		`Vitest ${ projectName } discovery does not match the migration manifest.`
+	);
+}
+assert.deepEqual(
+	[ ...vitestTests ].sort(),
+	getVitestTests( ROOT_DIR, manifest ),
+	'Vitest discovery does not match the migration manifest.'
+);
+
 const overlappingTests = [ ...jestTests ].filter( ( testPath ) =>
 	vitestTests.has( testPath )
 );
@@ -168,13 +231,6 @@ assert.deepEqual(
 	`Tests are owned by both Jest and Vitest:\n${ overlappingTests.join(
 		'\n'
 	) }`
-);
-
-const expectedVitestTests = getVitestTests( ROOT_DIR, manifest );
-assert.deepEqual(
-	[ ...vitestTests ].sort(),
-	expectedVitestTests,
-	`Vitest discovery does not match the migration manifest.`
 );
 
 const staticInventory = discoverTestFiles( ROOT_DIR );
@@ -208,5 +264,12 @@ assert.deepEqual(
 );
 
 console.log(
-	`Validated exactly one runner for ${ staticInventory.length } tests: ${ jestTests.size } Jest and ${ vitestTests.size } Vitest.`
+	`Validated exactly one runner and environment for ${
+		staticInventory.length
+	} tests: ${ jestTests.size } Jest and ${
+		vitestTests.size
+	} Vitest (${ VITEST_PROJECT_NAMES.map(
+		( projectName ) =>
+			`${ projectName }: ${ vitestTestsByProject[ projectName ].size }`
+	).join( ', ' ) }).`
 );

@@ -9,8 +9,12 @@ import { describe, expect, test } from 'vitest';
 import {
 	assertVitestProjectNames,
 	findOverlappingVitestProjectTests,
+	isBrowserTestPath,
 } from '../discover-test-files.mjs';
-import { hasTestEnvironmentOverride } from '../vitest-conventions.mjs';
+import {
+	hasBrowserModeImport,
+	hasTestEnvironmentOverride,
+} from '../vitest-conventions.mjs';
 
 describe( 'Vitest project routing', () => {
 	test( 'accepts the browser, jsdom, and node projects', () => {
@@ -57,6 +61,40 @@ describe( 'Vitest project routing', () => {
 		).toEqual( [
 			'packages/components/src/test/index.js: browser, jsdom',
 		] );
+	} );
+
+	test( 'recognizes colocated Browser Mode test filenames', () => {
+		expect(
+			isBrowserTestPath(
+				'packages/components/src/button/test/index.browser.test.tsx'
+			)
+		).toBe( true );
+		expect(
+			isBrowserTestPath(
+				'packages/components/src/button/test/index.test.tsx'
+			)
+		).toBe( false );
+		expect(
+			isBrowserTestPath( 'packages/components/src/button/test/index.tsx' )
+		).toBe( false );
+	} );
+
+	test( 'detects Browser Mode imports', () => {
+		expect(
+			hasBrowserModeImport(
+				"import { userEvent } from 'vitest/browser';"
+			)
+		).toBe( true );
+		expect(
+			hasBrowserModeImport(
+				"import { render } from 'vitest-browser-react';"
+			)
+		).toBe( true );
+		expect(
+			hasBrowserModeImport(
+				"import userEvent from '@testing-library/user-event';"
+			)
+		).toBe( false );
 	} );
 
 	test( 'detects per-file Vitest and Jest environment overrides', () => {

@@ -29,7 +29,10 @@ import {
 	getVitestTestsByProject,
 	VITEST_PROJECT_NAMES,
 } from './discover-test-files.mjs';
-import { hasTestEnvironmentOverride } from './vitest-conventions.mjs';
+import {
+	hasBrowserModeImport,
+	hasTestEnvironmentOverride,
+} from './vitest-conventions.mjs';
 
 const traverse = traverseModule.default ?? traverseModule;
 const { sync: glob } = globPackage;
@@ -46,6 +49,7 @@ const migration = JSON.parse(
 );
 const vitestTestsByProject = getVitestTestsByProject( ROOT_DIR, migration );
 const vitestTests = getVitestTests( ROOT_DIR, migration );
+const browserTests = new Set( vitestTestsByProject.browser );
 const vitestInfrastructure = [
 	'test/unit/vitest.config.mjs',
 	...glob( 'test/unit/config/**/*.vitest.{js,jsx,mjs,ts,tsx}', {
@@ -220,6 +224,16 @@ for ( const file of files ) {
 	) {
 		violations.push(
 			`${ file }: per-file test environment overrides are not allowed`
+		);
+	}
+
+	if (
+		vitestTests.includes( file ) &&
+		hasBrowserModeImport( source ) &&
+		! browserTests.has( file )
+	) {
+		violations.push(
+			`${ file }: Browser Mode imports require a *.browser.test.* filename`
 		);
 	}
 }

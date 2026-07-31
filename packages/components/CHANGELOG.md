@@ -41,7 +41,7 @@
 
 ### Internal
 
--   Run a Vitest Browser Mode pilot for real keyboard, focus, pointer, and portal interactions ([#80991](https://github.com/WordPress/gutenberg/pull/80991)).
+-   Add filename-based Vitest Browser Mode routing for real keyboard, focus, pointer, and portal interactions ([#80991](https://github.com/WordPress/gutenberg/pull/80991)).
 -   Run Components interaction tests in Vitest Browser Mode ([#80995](https://github.com/WordPress/gutenberg/pull/80995)).
 -   `Button`: Expand the Storybook e2e `VariantStates` matrix with compact, small, and with-icon rows ([#80793](https://github.com/WordPress/gutenberg/pull/80793)).
 -   Update `react-day-picker` to 9.14.0 ([#80792](https://github.com/WordPress/gutenberg/pull/80792)).

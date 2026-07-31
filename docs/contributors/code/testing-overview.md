@@ -43,6 +43,24 @@ Pass a file or directory to run a focused subset:
 npm run test:unit -- packages/components/src/button/test
 ```
 
+### Browser Mode
+
+The default component-test environment is jsdom and continues to use React
+Testing Library. Use [Vitest Browser Mode](https://vitest.dev/guide/browser/)
+when behavior depends on a real browser, such as native focus, keyboard or
+pointer events, portals, layout, or browser APIs.
+
+Keep Browser Mode tests beside the component and opt in with a
+`*.browser.test.js`, `*.browser.test.jsx`, `*.browser.test.ts`, or
+`*.browser.test.tsx` filename. The suffix selects the Browser project
+automatically; do not add the test to a central list or move it to a separate
+test tree. Browser tests can use `vitest-browser-react` for rendering and
+`vitest/browser` for locators and user interactions.
+
+Browser coverage is intentionally adopted incrementally. Existing jsdom tests
+do not need to move unless real-browser behavior materially improves what the
+test verifies.
+
 ### Folder structure
 
 Keep your tests in a `test` folder in your working directory. The test file should have the same name as the test subject file.

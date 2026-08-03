@@ -45,7 +45,7 @@
 
 ### Internal
 
--   Update `@ariakit/react` to 0.4.36 and `@ariakit/test` to 0.7.3.
+-   Update `@ariakit/react` to 0.4.36 and `@ariakit/test` to 0.7.3 ([#81080](https://github.com/WordPress/gutenberg/pull/81080)).
 -   `Button`: Expand the Storybook e2e `VariantStates` matrix with compact, small, and with-icon rows ([#80793](https://github.com/WordPress/gutenberg/pull/80793)).
 -   Update `react-day-picker` to 9.14.0 ([#80792](https://github.com/WordPress/gutenberg/pull/80792)).
 -   Update `date-fns` to 4.4.0 ([#80763](https://github.com/WordPress/gutenberg/pull/80763)).

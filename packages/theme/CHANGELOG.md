@@ -9,7 +9,7 @@
 
 ### Bug Fixes
 
--   Keep normal and active fill colors accessible, and return contrast warnings for the final generated ramp ([#81185](https://github.com/WordPress/gutenberg/pull/81185)).
+-   Check normal and active fill color contrast, and return warnings for the final generated ramp ([#81185](https://github.com/WordPress/gutenberg/pull/81185)).
 -   Avoid `ThemeProvider` assigning CSS color properties when a seed value is not provided and there is no ancestor to inherit from. This is consistent with how `cursor` and `cornerRadius` behave, and resolves an issue where `ThemeProvider` may forcibly override colors to the default color scheme in situations where the admin color scheme properties may be provided elsewhere ([#80600](https://github.com/WordPress/gutenberg/pull/80600)).
 
 ### Documentation

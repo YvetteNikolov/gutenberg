@@ -2,10 +2,6 @@
 
 ## Unreleased
 
-### New Features
-
--   Add `DirectionProvider` component. ([#80399](https://github.com/WordPress/gutenberg/pull/80399))
-
 ### Enhancements
 
 -   Add `SearchableChipSelect` primitive ([#80779](https://github.com/WordPress/gutenberg/pull/80779)).
@@ -19,6 +15,7 @@
 
 ### Bug Fixes
 
+-   Base UI-backed components now derive text direction from WordPress i18n. ([#80399](https://github.com/WordPress/gutenberg/pull/80399))
 -   `Button`, `Link`, `Combobox`, `Select`: Suppress the browser focus ring when keyboard-focused and pressed ([#81113](https://github.com/WordPress/gutenberg/pull/81113)).
 -   Keep overlays in the compat overlay slot available to assistive technologies when used alongside `@wordpress/components` Modal ([#80310](https://github.com/WordPress/gutenberg/pull/80310)).
 

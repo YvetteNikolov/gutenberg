@@ -4,7 +4,7 @@
 
 ### Enhancements
 
--   Add structured color ramp and semantic contrast warnings for `ThemeProvider` consumers ([#81185](https://github.com/WordPress/gutenberg/pull/81185)).
+-   Add an `onColorWarningsChange` callback for `ThemeProvider` consumers to receive structured color ramp and semantic contrast warnings ([#81185](https://github.com/WordPress/gutenberg/pull/81185)).
 -   Widen optional peer dependency ranges so projects on newer tooling can install without peer resolution conflicts: Vite `^7 || ^8`, Stylelint `^16 || ^17`, and esbuild `>=0.27.2 <1.0.0` ([#80267](https://github.com/WordPress/gutenberg/pull/80267)).
 
 ### Bug Fixes

@@ -1,5 +1,8 @@
 import { renderHook } from '@testing-library/react';
-import { SEMANTIC_COLOR_CONTRAST_PAIRS } from '../semantic-color-contrast-pairs';
+import {
+	getSemanticColorCustomProperty,
+	SEMANTIC_COLOR_CONTRAST_PAIRS,
+} from '../semantic-color-contrast-pairs';
 import { getContrast } from '../color-ramps/lib/color-utils';
 import { useThemeProviderStyles } from '../use-theme-provider-styles';
 
@@ -9,8 +12,8 @@ const CUSTOM_BACKGROUND = '#f6f3ef';
 
 const CONTRAST_PAIRS = SEMANTIC_COLOR_CONTRAST_PAIRS.map(
 	( { foreground, background } ) => ( {
-		foreground: `--wpds-color-${ foreground.replaceAll( '.', '-' ) }`,
-		background: `--wpds-color-${ background.replaceAll( '.', '-' ) }`,
+		foreground: getSemanticColorCustomProperty( foreground ),
+		background: getSemanticColorCustomProperty( background ),
 	} )
 );
 

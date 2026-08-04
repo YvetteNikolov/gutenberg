@@ -6,15 +6,17 @@ import clsx from 'clsx';
 /**
  * WordPress dependencies
  */
-import { useDispatch } from '@wordpress/data';
+import { useDispatch, useSelect } from '@wordpress/data';
 import { useRef, useCallback, useState } from '@wordpress/element';
 import { ResizableBox } from '@wordpress/components';
+import { store as blockEditorStore } from '@wordpress/block-editor';
 
 /**
  * Internal dependencies
  */
 import ResizeHandle from './resize-handle';
 import { store as editorStore } from '../../store';
+import { getDeviceTypeByCanvasWidth } from '../../utils/device-type';
 import { unlock } from '../../lock-unlock';
 
 // Removes the inline styles in the drag handles.
@@ -42,6 +44,34 @@ function isAtMaxWidth( currentWidth, containerWidth, tolerance = 0 ) {
 	return containerWidth > 0 && currentWidth >= containerWidth - tolerance;
 }
 
+/**
+ * Returns the canvas width to store, or `undefined` to keep the canvas fluid.
+ *
+ * @param {number} currentWidth   - The current width of the editor.
+ * @param {number} containerWidth - The width of the container.
+ * @return {number|undefined} - The canvas width, or undefined when fluid.
+ */
+function getCanvasWidthForSize( currentWidth, containerWidth ) {
+	return isAtMaxWidth( currentWidth, containerWidth, 80 )
+		? undefined
+		: currentWidth;
+}
+
+/**
+ * Returns a signature of what the editor renders from the canvas width: whether
+ * the canvas is fluid, and the device type driving the preview dropdown icon.
+ *
+ * @param {number|undefined} canvasWidth      - The canvas width.
+ * @param {Object|undefined} viewportSettings - The viewport breakpoint settings.
+ * @return {string} - The signature.
+ */
+function getCanvasWidthSignature( canvasWidth, viewportSettings ) {
+	return `${ canvasWidth === undefined }|${ getDeviceTypeByCanvasWidth(
+		canvasWidth,
+		viewportSettings
+	) }`;
+}
+
 function ResizableEditor( {
 	className,
 	enableResizing,
@@ -53,38 +83,86 @@ function ResizableEditor( {
 } ) {
 	const [ isResizing, setIsResizing ] = useState( false );
 	const { setCanvasWidth } = unlock( useDispatch( editorStore ) );
+	const { getSettings } = useSelect( blockEditorStore );
 
 	const resizableRef = useRef();
+	const gestureRef = useRef();
+
 	const resizeWidthBy = useCallback(
 		( deltaPixels ) => {
 			if ( resizableRef.current ) {
-				const _isAtMaxWidth = isAtMaxWidth(
-					resizableRef.current.offsetWidth + deltaPixels,
-					resizableRef.current.parentElement?.offsetWidth ?? 0,
-					80
-				);
 				setCanvasWidth(
-					_isAtMaxWidth
-						? undefined
-						: resizableRef.current.offsetWidth + deltaPixels
+					getCanvasWidthForSize(
+						resizableRef.current.offsetWidth + deltaPixels,
+						resizableRef.current.parentElement?.offsetWidth ?? 0
+					)
 				);
 			}
 		},
 		[ setCanvasWidth ]
 	);
 
-	const updateCanvasWidth = useCallback(
-		( element ) => {
-			const currentWidth = element.offsetWidth;
-			const containerWidth = element.parentElement?.offsetWidth ?? 0;
+	const handleResizeStart = ( event, direction, element ) => {
+		const startWidth = element.offsetWidth;
+		const containerWidth = element.parentElement?.offsetWidth ?? 0;
+		const viewportSettings = getSettings().__experimentalFeatures?.viewport;
+		gestureRef.current = {
+			startWidth,
+			containerWidth,
+			viewportSettings,
+			signature: getCanvasWidthSignature(
+				getCanvasWidthForSize( startWidth, containerWidth ),
+				viewportSettings
+			),
+		};
+		setIsResizing( true );
+		onResizeStart?.();
+	};
+
+	// `re-resizable` sizes the canvas itself while dragging, so only update the
+	// store when something observable changes. Dispatching on every pointer
+	// move would re-render the whole canvas for each frame of the drag.
+	const handleResize = ( event, direction, element, delta ) => {
+		const gesture = gestureRef.current;
+
+		if ( ! gesture ) {
+			return;
+		}
+
+		const canvasWidth = getCanvasWidthForSize(
+			gesture.startWidth + delta.width,
+			gesture.containerWidth
+		);
+		const signature = getCanvasWidthSignature(
+			canvasWidth,
+			gesture.viewportSettings
+		);
+
+		if ( signature === gesture.signature ) {
+			return;
+		}
+
+		gesture.signature = signature;
+		setCanvasWidth( canvasWidth );
+	};
+
+	const handleResizeStop = ( event, direction, element, delta ) => {
+		const gesture = gestureRef.current;
+
+		if ( gesture ) {
+			// Commit the exact width the gesture ended on.
 			setCanvasWidth(
-				isAtMaxWidth( currentWidth, containerWidth, 80 )
-					? undefined
-					: currentWidth
+				getCanvasWidthForSize(
+					gesture.startWidth + delta.width,
+					gesture.containerWidth
+				)
 			);
-		},
-		[ setCanvasWidth ]
-	);
+			gestureRef.current = undefined;
+		}
+
+		setIsResizing( false );
+		onResizeStop?.();
+	};
 
 	return (
 		<ResizableBox
@@ -99,18 +177,9 @@ function ResizableEditor( {
 				width,
 				height,
 			} }
-			onResizeStart={ () => {
-				setIsResizing( true );
-				onResizeStart?.();
-			} }
-			onResize={ ( event, direction, element ) => {
-				updateCanvasWidth( element );
-			} }
-			onResizeStop={ ( event, direction, element ) => {
-				updateCanvasWidth( element );
-				setIsResizing( false );
-				onResizeStop?.();
-			} }
+			onResizeStart={ handleResizeStart }
+			onResize={ handleResize }
+			onResizeStop={ handleResizeStop }
 			minWidth={ 300 }
 			maxWidth="100%"
 			maxHeight="100%"

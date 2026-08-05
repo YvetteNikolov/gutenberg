@@ -4,6 +4,7 @@
 
 ### Enhancements
 
+-   `CollapsibleCard`: Support multiple `HeaderDescription` components and validate that they are rendered inside `Header` ([#81227](https://github.com/WordPress/gutenberg/pull/81227)).
 -   Add `SearchableChipSelect` primitive ([#80779](https://github.com/WordPress/gutenberg/pull/80779)).
 -   Add `Combobox.InputGroup` primitive ([#80869](https://github.com/WordPress/gutenberg/pull/80869)).
 -   `Input`: Hide native browser spin controls for `type="number"` inputs by default ([#80646](https://github.com/WordPress/gutenberg/pull/80646)).

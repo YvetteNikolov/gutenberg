@@ -40,8 +40,6 @@ jobs:
 
             - name: Setup Node.js and install dependencies
               uses: ./.github/setup-node
-              with:
-                  node-version: '20'
 
             - name: Validate JavaScript test routing
               run: npm run test:unit:routing

@@ -7,6 +7,8 @@
 -	Components that compose Emotion style fragments with `cx()` should pass source-order-dependent fragments in a single `css()` call. Passing separate fragments can change override order after the following components stopped rendering styles through Emotion:
     -   `ItemGroup` ([#80797](https://github.com/WordPress/gutenberg/pull/80797))
     -   `Spinner` ([#80511](https://github.com/WordPress/gutenberg/pull/80511))
+    -   `TextareaControl` ([#66806](https://github.com/WordPress/gutenberg/issues/66806))
+
 
 ### Deprecations
 
@@ -41,6 +43,7 @@
 -   Update `@ariakit/react` to 0.4.35 and `@ariakit/test` to 0.7.2 ([#80765](https://github.com/WordPress/gutenberg/pull/80765)).
 -   Update `@floating-ui/react-dom` to 2.1.9 ([#80761](https://github.com/WordPress/gutenberg/pull/80761)).
 -   `ItemGroup`: Migrate styles from Emotion to an SCSS Module. ([#80797](https://github.com/WordPress/gutenberg/pull/80797)).
+-   `TextareaControl`: Migrate styles from Emotion to an SCSS Module. ([#66806](https://github.com/WordPress/gutenberg/issues/66806)).
 
 ## 38.0.0 (2026-07-29)
 

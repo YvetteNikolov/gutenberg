@@ -6,7 +6,6 @@ import { Tabs } from './tabs';
 import { kebabCase, normalizeTextString } from './utils/strings';
 import { lock } from './lock-unlock';
 import Badge from './badge';
-import { DateCalendar, DateRangeCalendar, TZDate } from './calendar';
 import {
 	ValidatedCheckboxControl,
 	ValidatedComboboxControl,
@@ -33,9 +32,6 @@ lock( privateApis, {
 	kebabCase,
 	Badge,
 	normalizeTextString,
-	DateCalendar,
-	DateRangeCalendar,
-	TZDate,
 	useDrag,
 	ValidatedInputControl,
 	ValidatedCheckboxControl,

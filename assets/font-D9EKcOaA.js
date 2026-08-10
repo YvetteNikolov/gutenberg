@@ -1,0 +1,1 @@
+const e={"default.fontFamily":"-apple-system, system-ui, 'Segoe UI', Roboto, Oxygen-Sans, Ubuntu, Cantarell, 'Helvetica Neue', sans-serif","default.fontSize":"13px","helpText.fontSize":"12px",mobileTextMinFontSize:"16px"};function font(t){return e[t]??""}export{font as f};

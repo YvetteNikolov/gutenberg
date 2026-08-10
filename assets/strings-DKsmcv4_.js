@@ -1,0 +1,1 @@
+import{r as e}from"./index-DsVPoQfp.js";const a=new RegExp(/[\u007e\u00ad\u2053\u207b\u208b\u2212\p{Pd}]/gu),normalizeTextString=p=>e(p).normalize("NFKC").toLocaleLowerCase().replace(a,"-");function escapeRegExp(e){return e.replace(/[\\^$.*+?()[\]{}|]/g,"\\$&")}export{escapeRegExp as e,normalizeTextString as n};

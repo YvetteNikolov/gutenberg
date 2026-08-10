@@ -1,0 +1,1 @@
+import{f as e}from"./useRenderElement-CPusILu_.js";import{r as o}from"./iframe-BDO6lwCK.js";const t=o.createContext(void 0);function useCheckboxGroupContext(r=!0){const n=o.useContext(t);if(void 0===n&&!r)throw new Error(e(3));return n}export{useCheckboxGroupContext as u};

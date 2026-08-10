@@ -1,0 +1,1 @@
+import{p as a}from"./index-BJsg9MsN.js";function kebabCase(e){let t=e?.toString?.()??"";return t=t.replace(/['\u2019]/,""),a(t,{splitRegexp:[/(?!(?:1ST|2ND|3RD|[4-9]TH)(?![a-z]))([a-z0-9])([A-Z])/g,/(?!(?:1st|2nd|3rd|[4-9]th)(?![a-z]))([0-9])([a-z])/g,/([A-Za-z])([0-9])/g,/([A-Z])([A-Z][a-z])/g]})}export{kebabCase as k};

@@ -1,0 +1,1 @@
+const t=6048e5,o=864e5,e=6e4,n=36e5,c=1e3,r=Symbol.for("constructDateFrom");function constructFrom(t,o){return"function"==typeof t?t(o):t&&"object"==typeof t&&r in t?t[r](o):t instanceof Date?new t.constructor(o):new Date(o)}function toDate(t,o){return constructFrom(o||t,t)}export{e as a,c as b,constructFrom as c,o as d,t as e,n as m,toDate as t};

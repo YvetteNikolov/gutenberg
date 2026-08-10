@@ -1,0 +1,1 @@
+import{b as r,f as a,a as o}from"./index-mOnzdliU.js";const t=r(function useSeparator2({orientation:r="horizontal",...a}){return a={role:"separator","aria-orientation":r,...a}}),n=a(function Separator2(r){const a=t(r);return o("hr",a)});export{n as S,t as u};

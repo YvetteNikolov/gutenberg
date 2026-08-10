@@ -12,9 +12,23 @@
 }
 
 .editor-post-taxonomies__hierarchical-terms-choice {
-	margin-bottom: $grid-unit-10;
+	$focus-ring-space: $border-width * 4 + $border-width-focus-fallback;
+
+	// Only a few rows show at a time. Without this, every forced layout in the
+	// editor costs in proportion to the number of terms.
+	content-visibility: auto;
+	contain-intrinsic-size: auto $grid-unit-30 + $focus-ring-space * 2;
+
+	// The paint containment above clips the checkbox focus ring, so hold space
+	// for it and pull that space back out with margins. Nothing overflows on
+	// the right, so that side is left alone.
+	padding: $focus-ring-space 0 $focus-ring-space $focus-ring-space;
+	margin-top: -$focus-ring-space;
+	margin-left: -$focus-ring-space;
+	margin-bottom: $grid-unit-10 - $focus-ring-space;
+
 	&:last-child {
-		margin-bottom: $grid-unit-05;
+		margin-bottom: $grid-unit-05 - $focus-ring-space;
 	}
 }
 

@@ -40,6 +40,19 @@ const DEFAULT_QUERY = {
 };
 const MIN_TERMS_COUNT_FOR_FILTER = 8;
 const EMPTY_ARRAY = [];
+// Filtering rebuilds the visible list, so wait for a pause in typing.
+const FILTER_DEBOUNCE_MS = 250;
+
+function getResultCount( termsTree ) {
+	let count = 0;
+	for ( const term of termsTree ) {
+		count++;
+		if ( undefined !== term.children ) {
+			count += getResultCount( term.children );
+		}
+	}
+	return count;
+}
 
 // Memoized on primitive props, so toggling one term does not re-render every
 // checkbox in the list.
@@ -194,8 +207,7 @@ export function HierarchicalTermSelector( { slug } ) {
 	const [ formParent, setFormParent ] = useState( '' );
 	const [ showForm, setShowForm ] = useState( false );
 	const [ filterValue, setFilterValue ] = useState( '' );
-	const [ filteredTermsTree, setFilteredTermsTree ] = useState( [] );
-	const debouncedSpeak = useDebounce( speak, 500 );
+	const [ filteredTermsTree, setFilteredTermsTree ] = useState( null );
 
 	const {
 		hasCreateAction,
@@ -271,8 +283,28 @@ export function HierarchicalTermSelector( { slug } ) {
 		);
 	} );
 
-	const shownTerms =
-		'' !== filterValue ? filteredTermsTree : availableTermsTree;
+	// Runs on a pause in typing, so the list is not rebuilt on every keystroke.
+	const filterTerms = useEvent( ( value ) => {
+		const newFilteredTermsTree = availableTermsTree
+			.map( getFilterMatcher( value ) )
+			.filter( ( term ) => term );
+		setFilteredTermsTree( newFilteredTermsTree );
+
+		const resultCount = getResultCount( newFilteredTermsTree );
+		speak(
+			sprintf(
+				/* translators: %d: number of results. */
+				_n( '%d result found.', '%d results found.', resultCount ),
+				resultCount
+			),
+			'assertive'
+		);
+	} );
+	const debouncedFilterTerms = useDebounce( filterTerms, FILTER_DEBOUNCE_MS );
+
+	// Keep showing the full list until a filter has actually been applied,
+	// rather than flashing an empty list while typing.
+	const shownTerms = filteredTermsTree ?? availableTermsTree;
 
 	const { createErrorNotice } = useDispatch( noticesStore );
 
@@ -356,31 +388,17 @@ export function HierarchicalTermSelector( { slug } ) {
 	};
 
 	const setFilter = ( value ) => {
-		const newFilteredTermsTree = availableTermsTree
-			.map( getFilterMatcher( value ) )
-			.filter( ( term ) => term );
-		const getResultCount = ( termsTree ) => {
-			let count = 0;
-			for ( let i = 0; i < termsTree.length; i++ ) {
-				count++;
-				if ( undefined !== termsTree[ i ].children ) {
-					count += getResultCount( termsTree[ i ].children );
-				}
-			}
-			return count;
-		};
-
 		setFilterValue( value );
-		setFilteredTermsTree( newFilteredTermsTree );
 
-		const resultCount = getResultCount( newFilteredTermsTree );
-		const resultsFoundMessage = sprintf(
-			/* translators: %d: number of results. */
-			_n( '%d result found.', '%d results found.', resultCount ),
-			resultCount
-		);
+		// Clearing restores the full list right away; there is nothing to wait
+		// for and the stale results would otherwise linger.
+		if ( '' === value ) {
+			debouncedFilterTerms.cancel();
+			setFilteredTermsTree( null );
+			return;
+		}
 
-		debouncedSpeak( resultsFoundMessage, 'assertive' );
+		debouncedFilterTerms( value );
 	};
 
 	const labelWithFallback = (

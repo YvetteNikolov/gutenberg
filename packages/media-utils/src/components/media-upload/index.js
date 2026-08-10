@@ -247,6 +247,11 @@ const slimImageObject = ( img ) => {
 		'alt',
 		'link',
 		'caption',
+		// The attachment's parent post. Consumers use this to tell an
+		// unattached item from one that already belongs to another post; without
+		// it, selections coming through `onUpdate` (the gallery edit and replace
+		// flows) are indistinguishable from items whose parent is unknown.
+		'uploadedTo',
 	];
 	return attrSet.reduce( ( result, key ) => {
 		if ( img?.hasOwnProperty( key ) ) {

@@ -55,6 +55,11 @@ function gutenberg_initialize_experiments_settings() {
 					'label'       => __( 'Media Upload Modal', 'gutenberg' ),
 					'description' => __( 'Replaces the existing WordPress media modal with a new modal powered by Data Views, supporting browsing, selecting, and uploading media.', 'gutenberg' ),
 				),
+				array(
+					'id'          => 'gutenberg-auto-attach-media',
+					'label'       => __( 'Attach media on selection', 'gutenberg' ),
+					'description' => __( 'Attaches media to the post it is added to, when that media is not already attached to another post. Media added to a draft is attached once the draft is published.', 'gutenberg' ),
+				),
 			),
 		),
 		array(

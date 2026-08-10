@@ -37,6 +37,7 @@ import { useRevisionBlocks } from './use-revision-blocks';
 import useCommands from '../commands';
 import useUploadSaveLock from './use-upload-save-lock';
 import useNetworkReconnect from './use-network-reconnect';
+import useAttachMediaOnPublish from './use-attach-media-on-publish';
 import BlockRemovalWarnings from '../block-removal-warnings';
 import StartPageOptions from '../start-page-options';
 import KeyboardShortcutHelpModal from '../keyboard-shortcut-help-modal';
@@ -395,6 +396,10 @@ export const ExperimentalEditorProvider = withRegistryProvider(
 
 		// Pause/resume media upload queue on network disconnect/reconnect.
 		useNetworkReconnect();
+
+		// Attach media selected while the post was still a draft, once it is
+		// published.
+		useAttachMediaOnPublish();
 
 		if ( ! isReady || ! mode ) {
 			return null;

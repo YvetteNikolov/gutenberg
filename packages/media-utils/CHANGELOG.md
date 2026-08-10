@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### Bug Fixes
+
+-   `MediaUpload`: Preserve the attachment's parent post (`uploadedTo`) on selections passed through `onUpdate`, so the gallery edit and replace flows can tell an unattached item from one that already belongs to another post ([#66663](https://github.com/WordPress/gutenberg/issues/66663)).
+
 ### Internal
 
 -   Remove the `window.__heicUploadSupport` type declaration, following the removal of the redundant flag ([#80452](https://github.com/WordPress/gutenberg/pull/80452)).

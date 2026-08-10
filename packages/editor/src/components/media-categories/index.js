@@ -17,6 +17,13 @@ import { decodeEntities } from '@wordpress/html-entities';
  * Internal dependencies
  */
 import { store as coreStore } from '@wordpress/core-data';
+// Imported from `helpers` rather than the directory entry point: the entry
+// point reads the editor store, which this module (and its tests) does not need.
+import {
+	getImageAttachmentIds,
+	normalizePostId,
+	saveAttachmentParent,
+} from '../../utils/attach-media/helpers';
 
 /** @typedef {import('@wordpress/block-editor').InserterMediaRequest} InserterMediaRequest */
 /** @typedef {import('@wordpress/block-editor').InserterMediaItem} InserterMediaItem */
@@ -169,55 +176,6 @@ const getAttachedImagesQuery = ( postId, query = {} ) => ( {
 	media_type: 'image',
 	parent: postId,
 } );
-
-const normalizePostId = ( postId ) => {
-	const parsedPostId = typeof postId === 'number' ? postId : Number( postId );
-
-	return Number.isInteger( parsedPostId ) && parsedPostId > 0
-		? parsedPostId
-		: undefined;
-};
-
-const saveAttachmentParent = ( attachmentId, postId ) =>
-	// `throwOnError` so a failed REST write rejects (rather than being silently
-	// swallowed), letting the attach/detach handlers surface an error notice
-	// instead of a false success.
-	dispatch( coreStore ).saveEntityRecord(
-		'postType',
-		'attachment',
-		{
-			id: attachmentId,
-			post: postId,
-		},
-		{ throwOnError: true }
-	);
-
-// A selected media item's coarse type is exposed differently by each picker.
-// The classic media modal puts the media type directly on `type` (e.g. 'image').
-// The DataViews-driven modal passes REST attachment records, where `type` is the
-// *post* type ('attachment') and the media type lives in `media_type`
-// ('image'|'file') / `mime_type`. So the REST fields must be read first, with
-// `type` as the classic-modal fallback — otherwise a REST image reads as
-// 'attachment' and gets gated out.
-const getMediaItemType = ( mediaItem ) =>
-	mediaItem?.media_type ||
-	mediaItem?.mime_type?.split( '/' )[ 0 ] ||
-	mediaItem?.type;
-
-// The picker's "Upload files" tab accepts any file type, so the selection can
-// include non-images. Gate to images only: a non-image would be reparented to
-// the post but never appear in the image-filtered grid, and would wrongly count
-// toward the "images attached" notice.
-const getImageAttachmentIds = ( mediaItems ) => [
-	...new Set(
-		( Array.isArray( mediaItems ) ? mediaItems : [ mediaItems ] )
-			.filter(
-				( mediaItem ) => getMediaItemType( mediaItem ) === 'image'
-			)
-			.map( ( mediaItem ) => mediaItem?.id )
-			.filter( Boolean )
-	),
-];
 
 const invalidateAttachedImagesQueries = ( postId, query = {} ) => {
 	const { invalidateResolution } = dispatch( coreStore );

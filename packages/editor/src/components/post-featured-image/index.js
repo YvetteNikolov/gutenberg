@@ -187,6 +187,10 @@ function PostFeaturedImage( {
 							DEFAULT_FEATURE_IMAGE_LABEL
 						}
 						onSelect={ onUpdateImage }
+						// Setting a featured image has never reparented the
+						// attachment, in the classic editor or here. Attaching
+						// on selection would be an unrelated behaviour change.
+						__unstableAutoAttach={ false }
 						unstableFeaturedImageFlow
 						allowedTypes={ ALLOWED_MEDIA_TYPES }
 						modalClass="editor-post-featured-image__media-modal"
